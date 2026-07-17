@@ -7,7 +7,9 @@ export default function Podium({ rows, baremTotal }:{ rows:any[]; baremTotal:num
       <div className="pod-body">
         {cls[i]==='pod-1' && <div className="pod-crown">👑</div>}
         <div className="pod-medal">{medal[i]}</div>
-        <div className="pod-logo" style={{background:'linear-gradient(135deg,#f37021,#ff9730)'}}>{t.team.code}</div>
+        <div className="pod-logo" style={{background:t.team.logoUrl?'var(--navy-950)':'var(--orange)',padding:0,overflow:'hidden'}}>
+          {t.team.logoUrl ? <img src={t.team.logoUrl} alt="" style={{width:'100%',height:'100%',objectFit:'cover'}}/> : t.team.code}
+        </div>
         <div className="pod-name">{t.team.name}</div>
         <div className="pod-tag">{t.team.tag}</div>
         <div className="pod-score tnum">{t.score?.toFixed(1)}<small> /{baremTotal}</small></div>

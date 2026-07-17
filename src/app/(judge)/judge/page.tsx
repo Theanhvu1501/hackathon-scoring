@@ -2,8 +2,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
+import { TeamLogo } from '@/components/Avatar';
 
-type Team = { id: string; name: string; code: string; tag?: string | null; members?: any[] };
+type Team = { id: string; name: string; code: string; tag?: string | null; logoUrl?: string | null; members?: any[] };
 
 export default function JudgeTeams() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -41,7 +42,7 @@ export default function JudgeTeams() {
             <Link key={t.id} href={'/judge/score/' + t.id} className="card card-pad" style={{ cursor: 'pointer', borderColor: done ? 'rgba(31,157,85,.4)' : undefined }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
                 <div className="tcell">
-                  <span className="team-ava" style={{ background: done ? 'var(--green)' : 'var(--blue)' }}>{t.code}</span>
+                  <TeamLogo code={t.code} logoUrl={t.logoUrl} color={done ? 'var(--green)' : 'var(--blue)'} />
                   <div><b style={{ fontFamily: 'Space Grotesk', fontSize: 16 }}>{t.name}</b>
                     <small style={{ display: 'block', color: 'var(--muted-2)' }}>{t.members?.length || 0} thành viên</small></div>
                 </div>

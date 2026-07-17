@@ -5,9 +5,11 @@ import { fetcher } from '@/lib/ui';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
 import { useConfirm } from '@/components/ConfirmProvider';
+import ImagePicker from '@/components/ImagePicker';
+import { TeamLogo } from '@/components/Avatar';
 
-type Team = { id: string; name: string; code: string; tag?: string | null; members?: any[] };
-const EMPTY = { name: '', code: '', tag: '' };
+type Team = { id: string; name: string; code: string; tag?: string | null; logoUrl?: string | null; members?: any[] };
+const EMPTY = { name: '', code: '', tag: '', logoUrl: '' };
 
 export default function Teams() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -20,7 +22,7 @@ export default function Teams() {
   useEffect(() => { load(); }, []);
 
   function openAdd() { setForm(EMPTY); setModal('add'); }
-  function openEdit(t: Team) { setForm({ name: t.name, code: t.code, tag: t.tag || '' }); setModal(t); }
+  function openEdit(t: Team) { setForm({ name: t.name, code: t.code, tag: t.tag || '', logoUrl: t.logoUrl || '' }); setModal(t); }
 
   async function save() {
     if (!form.name || !form.code) return;
@@ -38,7 +40,7 @@ export default function Teams() {
 
   const columns: Column<Team>[] = [
     { key: 'team', header: 'Đội', filterText: (t) => t.name + ' ' + t.code, render: (t) => (
-      <div className="tcell"><span className="team-ava" style={{ background: 'var(--orange)' }}>{t.code}</span><b>{t.name}</b></div>
+      <div className="tcell"><TeamLogo code={t.code} logoUrl={t.logoUrl} /><b>{t.name}</b></div>
     ) },
     { key: 'members', header: 'Thành viên', render: (t) => <span className="tnum">{t.members?.length || 0} người</span> },
     { key: 'tag', header: 'Mô tả', filterText: (t) => t.tag || '', render: (t) => <span style={{ color: 'var(--muted)' }}>{t.tag}</span> },
@@ -68,6 +70,9 @@ export default function Teams() {
             <button className="btn btn-primary" disabled={busy} onClick={save}>{modal === 'add' ? 'Thêm' : 'Lưu'}</button>
           </>}
         >
+          <div className="field"><label>Logo đội</label>
+            <ImagePicker value={form.logoUrl} onChange={(v) => setForm({ ...form, logoUrl: v })} size={64} placeholder={form.code || '＋'} />
+          </div>
           <div className="two-col">
             <div className="field"><label>Tên đội</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div className="field"><label>Mã (badge, 2–3 ký tự)</label><input className="input" value={form.code} maxLength={3} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} /></div>

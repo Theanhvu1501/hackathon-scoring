@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { judgeProgress } from '@/lib/services/scores';
+import { TeamLogo } from '@/components/Avatar';
 export const dynamic = 'force-dynamic';
 export default async function Dashboard() {
   const [teams, judges, progress] = await Promise.all([
@@ -14,7 +15,7 @@ export default async function Dashboard() {
         <thead><tr><th>Đội</th>{judges.map(j=><th key={j.id} style={{textAlign:'center'}}>{j.name.split(' ').pop()}{j.isHead?' ♛':''}</th>)}</tr></thead>
         <tbody>
           {teams.map(t=>(
-            <tr key={t.id}><td><div className="tcell"><span className="team-ava" style={{background:'linear-gradient(135deg,#f37021,#ff9730)'}}>{t.code}</span><b>{t.name}</b></div></td>
+            <tr key={t.id}><td><div className="tcell"><TeamLogo code={t.code} logoUrl={t.logoUrl} /><b>{t.name}</b></div></td>
             {judges.map(j=>(<td key={j.id} style={{textAlign:'center'}}>
               <span className={'cellstat '+(done.has(j.id+':'+t.id)?'cs-done':'cs-wait')}>{done.has(j.id+':'+t.id)?'✓':''}</span>
             </td>))}

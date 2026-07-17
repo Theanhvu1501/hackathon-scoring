@@ -4,10 +4,12 @@ import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import Modal from '@/components/Modal';
 import { useConfirm } from '@/components/ConfirmProvider';
+import ImagePicker from '@/components/ImagePicker';
+import { TeamLogo, MemberAvatar } from '@/components/Avatar';
 
-type Member = { id: string; name: string; teamRole?: string | null; org?: string | null; email?: string | null; phone?: string | null; intro?: string | null };
-type Team = { id: string; name: string; code: string; tag?: string | null; members: Member[] };
-const EMPTY = { name: '', teamRole: '', org: '', email: '', phone: '', intro: '' };
+type Member = { id: string; name: string; teamRole?: string | null; org?: string | null; email?: string | null; phone?: string | null; intro?: string | null; photoUrl?: string | null };
+type Team = { id: string; name: string; code: string; tag?: string | null; logoUrl?: string | null; members: Member[] };
+const EMPTY = { name: '', teamRole: '', org: '', email: '', phone: '', intro: '', photoUrl: '' };
 
 export default function TeamDetail({ params }: { params: { id: string } }) {
   const [team, setTeam] = useState<Team | null>(null);
@@ -24,7 +26,7 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
 
   function openAdd() { setForm(EMPTY); setModal('add'); }
   function openEdit(m: Member) {
-    setForm({ name: m.name, teamRole: m.teamRole || '', org: m.org || '', email: m.email || '', phone: m.phone || '', intro: m.intro || '' });
+    setForm({ name: m.name, teamRole: m.teamRole || '', org: m.org || '', email: m.email || '', phone: m.phone || '', intro: m.intro || '', photoUrl: m.photoUrl || '' });
     setModal(m);
   }
   async function save() {
@@ -49,7 +51,7 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
         <div>
           <Link className="btn btn-ghost btn-sm" href="/admin/teams" style={{ marginBottom: 10 }}>← Danh sách đội</Link>
           <div className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span className="team-ava" style={{ width: 46, height: 46, fontSize: 18, background: 'var(--orange)' }}>{team.code}</span>
+            <TeamLogo code={team.code} logoUrl={team.logoUrl} size={46} />
             {team.name}
           </div>
           <div className="page-desc">{team.tag}</div>
@@ -63,7 +65,7 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
         {team.members.map((m) => (
           <div className="card member" key={m.id}>
             <div className="m-top">
-              <span className="m-photo">{m.name.split(' ').pop()![0]}</span>
+              <MemberAvatar name={m.name} photoUrl={m.photoUrl} />
               <div><div className="m-name">{m.name}</div><div className="m-role">{m.teamRole}</div></div>
             </div>
             <div className="m-meta">{m.org}{m.email ? <><br />✉ {m.email}</> : null}{m.phone ? <><br />☎ {m.phone}</> : null}</div>
@@ -85,6 +87,9 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
             <button className="btn btn-primary" disabled={busy} onClick={save}>{modal === 'add' ? 'Thêm' : 'Lưu'}</button>
           </>}
         >
+          <div className="field"><label>Ảnh đại diện</label>
+            <ImagePicker value={form.photoUrl} onChange={(v) => setForm({ ...form, photoUrl: v })} shape="circle" size={64} />
+          </div>
           <div className="two-col">
             <div className="field"><label>Họ tên</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div className="field"><label>Vai trò trong đội</label><input className="input" value={form.teamRole} onChange={(e) => setForm({ ...form, teamRole: e.target.value })} /></div>
