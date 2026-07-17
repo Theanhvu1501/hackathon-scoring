@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  admin
+  judge
+}
+
+enum RevealState {
+  drafting
+  provisional
+  final
+}
+
+model User {
+  id         String   @id @default(cuid())
+  name       String
+  role       Role
+  isHead     Boolean  @default(false)   // Trưởng BGK
+  accessCode String   @unique
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  scores     Score[]
+}
+
+model Team {
+  id        String   @id @default(cuid())
+  name      String
+  code      String                     // 2-3 letter badge, e.g. "EV"
+  logoUrl   String?
+  tag       String?                    // short description shown on board
+  createdAt DateTime @default(now())
+  members   Member[]
+  scores    Score[]
+}
+
+model Member {
+  id       String  @id @default(cuid())
+  teamId   String
+  team     Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name     String
+  teamRole String?                     // role in team, e.g. "Leader · Backend"
+  photoUrl String?
+  org      String?
+  email    String?
+  phone    String?
+  intro    String?
+}
+
+model Criterion {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  maxScore    Float
+  order       Int     @default(0)
+  scores      Score[]
+}
+
+model Score {
+  id          String    @id @default(cuid())
+  judgeId     String
+  judge       User      @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  teamId      String
+  team        Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  criterionId String
+  criterion   Criterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  value       Float
+  submitted   Boolean   @default(false)
+  updatedAt   DateTime  @updatedAt
+  @@unique([judgeId, teamId, criterionId])
+}
+
+model Settings {
+  id          Int         @id @default(1)
+  revealState RevealState @default(drafting)
+  updatedAt   DateTime    @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  target    String?
+  createdAt DateTime @default(now())
+}
