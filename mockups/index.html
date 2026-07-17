@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Automotive Hackathon 2026 — Mockups giao diện</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --navy-950:#eaf1fd;   /* subtle input / chip surface */
+  --navy-900:#f3f7ff;   /* page background */
+  --navy-850:#ffffff;   /* panel / card top */
+  --navy-800:#f5f9ff;   /* panel / card bottom */
+  --navy-700:#e8eeff;   /* alt section */
+  --line:rgba(23,54,120,.12);
+  --line-strong:rgba(23,54,120,.22);
+  --orange:#f37021;
+  --orange-lt:#ff9730;
+  --orange-dk:#e0620f;
+  --blue:#2563eb;
+  --blue-deep:#001af0;
+  --cyan:#0a97c4;
+  --green:#1f9d55;
+  --amber:#d98600;
+  --red:#e23b3b;
+  --text:#0a1f48;
+  --muted:#51648a;
+  --muted-2:#8496b6;
+  --grad-brand:linear-gradient(135deg,#f37021 0%,#ff9730 55%,#ffb35a 100%);
+  --grad-cross:linear-gradient(135deg,#f37021 0%,#2563eb 100%);
+  --radius:14px;
+  --radius-sm:10px;
+  --shadow:0 18px 40px -24px rgba(23,54,120,.32);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,system-ui,sans-serif;
+  background:
+    radial-gradient(1100px 600px at 88% -8%, rgba(243,112,33,.14), transparent 60%),
+    radial-gradient(1000px 700px at 5% 0%, rgba(0,212,255,.12), transparent 55%),
+    var(--navy-900);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;
+}
+h1,h2,h3,.disp{font-family:"Space Grotesk",Inter,sans-serif;letter-spacing:-.01em}
+.tnum{font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+
+/* ---------- App shell ---------- */
+.app{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+.sidebar{
+  background:linear-gradient(180deg,var(--navy-950),var(--navy-900));
+  border-right:1px solid var(--line);
+  padding:22px 16px;position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 8px 20px}
+.brand-logo{
+  width:40px;height:40px;border-radius:11px;background:var(--grad-brand);
+  display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;
+  color:#3a1400;font-size:20px;box-shadow:0 8px 20px -6px rgba(243,112,33,.6);
+}
+.brand-name{font-family:"Space Grotesk";font-weight:600;font-size:15px;line-height:1.15}
+.brand-sub{font-size:11px;color:var(--muted-2);letter-spacing:.04em;text-transform:uppercase}
+.nav-group{margin-top:16px}
+.nav-label{
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted-2);
+  padding:0 10px 8px;font-weight:600;display:flex;align-items:center;gap:7px;
+}
+.nav-label::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+.nav-label.admin::before{background:var(--orange)}
+.nav-label.judge::before{background:var(--cyan)}
+.nav-label.public::before{background:var(--green)}
+.nav-item{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:9px 11px;border-radius:10px;color:var(--muted);font-size:13.5px;font-weight:500;
+  transition:.15s;margin-bottom:2px;
+}
+.nav-item:hover{background:rgba(23,54,120,.055);color:var(--text)}
+.nav-item.active{background:linear-gradient(90deg,rgba(243,112,33,.14),rgba(243,112,33,.02));color:var(--text)}
+.nav-item.active .ni-ic{background:var(--grad-brand);color:#3a1400;border-color:transparent}
+.ni-ic{
+  width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;
+  background:rgba(23,54,120,.05);border:1px solid var(--line);font-size:14px;
+}
+.side-foot{margin-top:22px;padding:12px 10px;border-top:1px solid var(--line);color:var(--muted-2);font-size:11px;line-height:1.6}
+
+/* ---------- Main ---------- */
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:16px 30px;border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.75);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20;
+}
+.crumb{font-size:12.5px;color:var(--muted)}
+.crumb b{color:var(--text);font-weight:600}
+.top-actions{display:flex;align-items:center;gap:12px}
+.who{display:flex;align-items:center;gap:9px;font-size:13px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--grad-cross);display:grid;place-items:center;font-weight:600;font-size:13px;color:#fff}
+.content{padding:30px;max-width:none;width:100%}
+.screen{display:none;animation:fade .35s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- Reusable ---------- */
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px;flex-wrap:wrap}
+.page-title{font-size:26px;font-weight:600}
+.page-desc{color:var(--muted);font-size:13.5px;margin-top:5px;max-width:60ch}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--orange-lt);font-weight:600;margin-bottom:8px}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-size:13.5px;font-weight:600;transition:.15s;border:1px solid var(--line-strong);color:var(--text);background:#fff}
+.btn:hover{border-color:var(--blue);background:rgba(37,99,235,.06)}
+.btn-primary{background:var(--grad-brand);color:#3a1400;border-color:transparent;box-shadow:0 10px 24px -12px rgba(243,112,33,.7)}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn-ghost:hover{color:var(--text);background:rgba(23,54,120,.05)}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.btn-danger{color:#ffd7d7;border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.1)}
+
+.card{background:linear-gradient(180deg,var(--navy-850),var(--navy-800));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-pad{padding:20px}
+.grid{display:grid;gap:16px}
+.stat-row{grid-template-columns:repeat(4,1fr)}
+.stat{padding:18px 18px 16px;position:relative;overflow:hidden}
+.stat::after{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--grad-brand)}
+.stat .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.stat .v{font-family:"Space Grotesk";font-size:32px;font-weight:600;margin-top:8px;line-height:1}
+.stat .d{font-size:12px;color:var(--muted-2);margin-top:6px}
+.stat.cyan::after{background:linear-gradient(180deg,var(--cyan),var(--blue))}
+.stat.green::after{background:linear-gradient(180deg,var(--green),#1f9c50)}
+.stat.blue::after{background:linear-gradient(180deg,var(--blue),var(--blue-deep))}
+
+.pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:600;border:1px solid transparent}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.done{color:var(--green);background:rgba(62,207,106,.12);border-color:rgba(62,207,106,.25)}
+.pill.pending{color:var(--amber);background:rgba(255,176,32,.12);border-color:rgba(255,176,32,.25)}
+.pill.wait{color:var(--muted);background:rgba(159,178,216,.1);border-color:var(--line)}
+.pill.live{color:var(--cyan);background:rgba(0,212,255,.12);border-color:rgba(0,212,255,.3)}
+.pill.live::before{animation:blink 1.3s infinite}
+@keyframes blink{50%{opacity:.25}}
+
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted-2);font-weight:600;text-align:left;padding:12px 16px;border-bottom:1px solid var(--line)}
+td{padding:13px 16px;border-bottom:1px solid var(--line);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:background .15s}
+tbody tr:hover{background:rgba(37,99,235,.035)}
+
+.team-ava{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:15px;color:#fff;flex:0 0 auto}
+.tcell{display:flex;align-items:center;gap:12px}
+.tcell b{font-weight:600}
+.tcell small{display:block;color:var(--muted-2);font-size:11.5px;margin-top:1px}
+
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:7px}
+.input,.textarea,select.input{
+  width:100%;padding:11px 13px;border-radius:10px;font-family:inherit;font-size:13.5px;
+  background:var(--navy-950);border:1px solid var(--line-strong);color:var(--text);transition:.15s;
+}
+.input:focus,.textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(243,112,33,.15)}
+.textarea{resize:vertical;min-height:92px;line-height:1.55}
+.hint{font-size:11.5px;color:var(--muted-2);margin-top:6px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.divider{height:1px;background:var(--line);margin:20px 0}
+
+.code-chip{font-family:"Space Grotesk";letter-spacing:.16em;background:var(--navy-950);border:1px dashed var(--line-strong);padding:5px 12px;border-radius:8px;font-size:13px;color:var(--cyan);display:inline-flex;gap:10px;align-items:center}
+
+/* progress matrix */
+.matrix{overflow-x:auto}
+.matrix table{min-width:640px}
+.cellstat{width:24px;height:24px;border-radius:7px;display:inline-grid;place-items:center;font-size:12px;font-weight:700}
+.cs-done{background:rgba(62,207,106,.16);color:var(--green)}
+.cs-wait{background:rgba(159,178,216,.08);color:var(--muted-2);border:1px solid var(--line)}
+.bar{height:7px;border-radius:6px;background:rgba(23,54,120,.1);overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--grad-brand);border-radius:6px}
+
+/* member cards */
+.members{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.member{padding:16px;display:flex;flex-direction:column;gap:10px}
+.m-top{display:flex;gap:12px;align-items:center}
+.m-photo{width:48px;height:48px;border-radius:12px;background:var(--grad-cross);display:grid;place-items:center;font-weight:600;color:#fff;flex:0 0 auto}
+.m-name{font-weight:600;font-size:14px}
+.m-role{font-size:11.5px;color:var(--cyan);font-weight:600;margin-top:1px}
+.m-meta{font-size:11.5px;color:var(--muted-2);line-height:1.6}
+.m-intro{font-size:12px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);padding-top:10px}
+
+/* score entry */
+.crit{display:grid;grid-template-columns:1fr 150px;gap:16px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
+.crit:last-of-type{border-bottom:none}
+.crit-name{font-weight:600;font-size:14px}
+.crit-desc{font-size:12px;color:var(--muted-2);margin-top:3px}
+.crit-max{font-size:11.5px;color:var(--orange-lt);font-weight:600}
+.score-in{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.score-in input{width:74px;text-align:center;font-family:"Space Grotesk";font-size:17px;font-weight:600;padding:9px}
+.score-in span{color:var(--muted-2);font-size:13px}
+.total-box{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;margin-top:8px;border-radius:12px;background:linear-gradient(90deg,rgba(243,112,33,.14),rgba(37,99,235,.1));border:1px solid var(--line-strong)}
+.total-box .tl{font-size:13px;color:var(--muted);font-weight:600}
+.total-box .tv{font-family:"Space Grotesk";font-size:30px;font-weight:700}
+.total-box .tv small{font-size:15px;color:var(--muted);font-weight:500}
+
+/* publish control */
+.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.step{padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--navy-850);position:relative;transition:.2s}
+.step.active{border-color:var(--orange);background:linear-gradient(180deg,rgba(243,112,33,.14),var(--navy-850));box-shadow:0 12px 30px -16px rgba(243,112,33,.6)}
+.step.done{border-color:rgba(62,207,106,.4)}
+.step-n{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:13px;background:rgba(23,54,120,.07);color:var(--muted);margin-bottom:10px}
+.step.active .step-n{background:var(--grad-brand);color:#3a1400}
+.step.done .step-n{background:rgba(62,207,106,.2);color:var(--green)}
+.step h4{font-size:14px;margin-bottom:4px}
+.step p{font-size:11.5px;color:var(--muted-2);line-height:1.5}
+.mini-stat{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted);padding:10px 12px;background:var(--navy-950);border-radius:10px;border:1px solid var(--line)}
+.mini-stat b{font-family:"Space Grotesk";color:var(--text)}
+.publish-wrap{max-width:640px;margin:0 auto;text-align:center;padding:20px 0}
+.publish-orb{width:120px;height:120px;border-radius:50%;margin:6px auto 22px;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,rgba(62,207,106,.3),transparent 70%);border:1px solid rgba(62,207,106,.35)}
+.publish-orb i{width:60px;height:60px;border-radius:50%;background:var(--grad-brand);display:grid;place-items:center;font-size:26px;color:#3a1400}
+
+.badge-head{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:#3a1400;background:var(--grad-brand);padding:2px 8px;border-radius:999px;vertical-align:middle;letter-spacing:.02em}
+
+/* ---- Public leaderboard ---- */
+.public-stage{
+  min-height:100vh;background:
+   radial-gradient(1200px 700px at 50% -14%, rgba(243,112,33,.16), transparent 55%),
+   radial-gradient(900px 600px at 8% 112%, rgba(0,153,204,.13), transparent 55%),
+   linear-gradient(180deg,#ffffff,#eaf1fd);
+  padding:40px 5vw;color:var(--text);
+}
+.pub-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:34px;gap:20px;flex-wrap:wrap}
+.pub-title{font-family:"Space Grotesk";font-size:clamp(24px,3.4vw,42px);font-weight:700;line-height:1;text-transform:uppercase;letter-spacing:.01em}
+.pub-title span{background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;color:transparent}
+.pub-sub{color:var(--muted);font-size:14px;margin-top:8px;letter-spacing:.03em}
+/* provisional banner */
+.prov-banner{display:flex;align-items:center;gap:14px;padding:14px 22px;border-radius:16px;margin-bottom:22px;
+  background:linear-gradient(90deg,rgba(255,176,32,.16),rgba(37,99,235,.08));border:1px solid rgba(255,176,32,.35)}
+.prov-banner .pb-ic{width:40px;height:40px;border-radius:11px;background:rgba(255,176,32,.18);display:grid;place-items:center;font-size:20px;color:var(--amber);flex:0 0 auto}
+.prov-banner b{color:var(--text);font-family:"Space Grotesk"}
+.prov-banner p{font-size:12.5px;color:var(--muted);margin-top:2px}
+.prov-tag{margin-left:auto;font-family:"Space Grotesk";font-weight:700;color:var(--amber);font-size:13px;letter-spacing:.08em;white-space:nowrap}
+
+/* ---- Podium (top 3) ---- */
+.podium{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:18px;align-items:end;margin-bottom:34px;max-width:920px;margin-left:auto;margin-right:auto}
+.pod{position:relative;border-radius:18px 18px 0 0;text-align:center;border:1px solid var(--line-strong);border-bottom:none;
+  display:flex;flex-direction:column;align-items:stretch;overflow:hidden;
+  background:linear-gradient(180deg,#ffffff,#f2f6ff);box-shadow:0 -4px 30px -20px rgba(23,54,120,.4);animation:podrise .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes podrise{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
+.pod-body{padding:22px 16px 16px;display:flex;flex-direction:column;align-items:center;width:100%}
+.pod-riser{width:100%;margin-top:auto;border-top:1px solid var(--line)}
+.pod-1{--m:#d99400;background:linear-gradient(180deg,rgba(243,112,33,.18),#ffffff);border-color:rgba(243,112,33,.5);box-shadow:0 -6px 50px -18px rgba(255,150,40,.6);animation-delay:.15s}
+.pod-1 .pod-riser{height:82px;background:linear-gradient(180deg,rgba(243,112,33,.12),rgba(243,112,33,.03))}
+.pod-2{--m:#7c8ba6;animation-delay:0s}
+.pod-2 .pod-riser{height:46px;background:linear-gradient(180deg,rgba(124,139,166,.1),transparent)}
+.pod-3{--m:#c17d3f;animation-delay:.3s}
+.pod-3 .pod-riser{height:26px;background:linear-gradient(180deg,rgba(193,125,63,.1),transparent)}
+.pod-medal{width:40px;height:40px;border-radius:50%;margin:0 auto 12px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:18px;color:#08152e;background:var(--m);box-shadow:0 6px 18px -6px var(--m)}
+.pod-1 .pod-medal{width:52px;height:52px;font-size:24px}
+.pod-crown{font-size:30px;line-height:1;margin-bottom:6px;filter:drop-shadow(0 4px 10px rgba(255,190,70,.6))}
+.pod-logo{width:64px;height:64px;border-radius:16px;margin:0 auto 12px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:24px;color:#fff}
+.pod-1 .pod-logo{width:78px;height:78px;font-size:30px}
+.pod-name{font-family:"Space Grotesk";font-weight:600;font-size:18px;margin-bottom:3px}
+.pod-1 .pod-name{font-size:22px}
+.pod-tag{font-size:11px;color:var(--muted-2);margin-bottom:12px;min-height:14px}
+.pod-score{font-family:"Space Grotesk";font-weight:700;font-size:30px;color:var(--m)}
+.pod-1 .pod-score{font-size:40px;color:var(--orange-lt)}
+.pod-score small{font-size:13px;color:var(--muted-2);font-weight:500}
+.pod-rank{position:absolute;top:12px;left:12px;font-family:"Space Grotesk";font-weight:700;font-size:14px;color:var(--m);opacity:.8}
+
+.lb{display:flex;flex-direction:column;gap:12px;position:relative}
+.row{
+  display:grid;grid-template-columns:96px 1fr 200px;align-items:center;gap:18px;
+  padding:16px 24px;border-radius:16px;
+  background:linear-gradient(90deg,#ffffff,#f6f9ff);
+  border:1px solid var(--line);box-shadow:0 8px 20px -18px rgba(23,54,120,.4);
+  transition:transform .8s cubic-bezier(.22,1,.36,1),border-color .4s,box-shadow .4s;
+}
+.row.leader{border-color:rgba(243,112,33,.6);background:linear-gradient(90deg,rgba(243,112,33,.12),#ffffff);box-shadow:0 18px 40px -22px rgba(243,112,33,.5)}
+.row.top3{border-color:var(--line-strong)}
+.rk{display:flex;align-items:center;gap:10px}
+.rk-num{font-family:"Space Grotesk";font-size:40px;font-weight:700;line-height:1;min-width:58px}
+.leader .rk-num{background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rk-move{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:2px}
+.mv-up{color:var(--green)}.mv-down{color:var(--red)}.mv-same{color:var(--muted-2)}
+.r-team{display:flex;align-items:center;gap:16px;min-width:0}
+.r-logo{width:52px;height:52px;border-radius:13px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:20px;color:#fff;flex:0 0 auto}
+.r-name{font-family:"Space Grotesk";font-size:22px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r-tag{font-size:12px;color:var(--muted-2);margin-top:2px}
+.r-score{text-align:right;font-family:"Space Grotesk"}
+.r-score .sc{font-size:38px;font-weight:700;line-height:1}
+.leader .r-score .sc{color:var(--orange-lt)}
+.r-score .of{font-size:13px;color:var(--muted-2);font-weight:500}
+.judge-dots{display:flex;gap:4px;justify-content:flex-end;margin-top:7px}
+.jd{width:9px;height:9px;border-radius:50%;background:rgba(23,54,120,.16)}
+.jd.on{background:var(--cyan)}
+
+/* waiting screen */
+.wait-stage{min-height:100vh;display:grid;place-items:center;text-align:center;background:
+  radial-gradient(1000px 700px at 50% 30%, rgba(37,99,235,.12), transparent 60%),
+  radial-gradient(800px 500px at 50% 100%, rgba(243,112,33,.1), transparent 55%),
+  linear-gradient(180deg,#ffffff,#eaf1fd);padding:40px}
+.wait-inner{max-width:640px}
+.wait-badge{width:96px;height:96px;border-radius:26px;margin:0 auto 28px;background:var(--grad-brand);display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:40px;color:#3a1400;box-shadow:0 20px 50px -18px rgba(243,112,33,.7);animation:float 4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-10px)}}
+.wait-title{font-family:"Space Grotesk";font-size:clamp(30px,5vw,52px);font-weight:700;line-height:1.05}
+.wait-title span{background:var(--grad-brand);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wait-desc{color:var(--muted);font-size:16px;margin-top:16px;line-height:1.6}
+.dots-live{display:inline-flex;gap:7px;margin-top:26px;align-items:center;color:var(--cyan);font-size:13px;font-weight:600;letter-spacing:.05em}
+.dots-live i{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:blink 1.2s infinite}
+
+.note{display:flex;gap:12px;padding:13px 15px;border-radius:11px;background:rgba(10,151,196,.08);border:1px solid rgba(10,151,196,.28);font-size:12.5px;color:#0d5a7a;line-height:1.55;margin-bottom:18px}
+.note b{color:var(--text)}
+.demo-hint{position:fixed;bottom:18px;right:18px;z-index:50}
+
+.seg{display:inline-flex;background:var(--navy-950);border:1px solid var(--line);border-radius:10px;padding:3px}
+.seg button{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--grad-brand);color:#3a1400}
+
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto}
+  .stat-row{grid-template-columns:1fr 1fr}
+  .two-col{grid-template-columns:1fr}
+  .row{grid-template-columns:70px 1fr 130px;gap:10px;padding:12px 14px}
+  .r-name{font-size:17px}.rk-num{font-size:28px;min-width:40px}.r-score .sc{font-size:26px}.r-logo{width:42px;height:42px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div>
+        <div class="brand-name">Automotive Hackathon</div>
+        <div class="brand-sub">2026 · Chung kết</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Chung</div>
+      <button class="nav-item" data-go="login"><span class="ni-ic">→</span> Đăng nhập (access code)</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label admin">Admin CMS</div>
+      <button class="nav-item active" data-go="dashboard"><span class="ni-ic">▦</span> Tổng quan &amp; tiến độ</button>
+      <button class="nav-item" data-go="teams"><span class="ni-ic">◈</span> Quản lý đội thi</button>
+      <button class="nav-item" data-go="team-detail"><span class="ni-ic">☰</span> Chi tiết đội &amp; thành viên</button>
+      <button class="nav-item" data-go="judges"><span class="ni-ic">◐</span> Tài khoản BGK</button>
+      <button class="nav-item" data-go="barem"><span class="ni-ic">＃</span> Cấu hình barem</button>
+      <button class="nav-item" data-go="publish"><span class="ni-ic">◉</span> Điều khiển công bố</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label judge">Ban giám khảo</div>
+      <button class="nav-item" data-go="j-teams"><span class="ni-ic">◈</span> Danh sách đội</button>
+      <button class="nav-item" data-go="j-score"><span class="ni-ic">✎</span> Nhập điểm</button>
+      <button class="nav-item" data-go="j-result"><span class="ni-ic">≡</span> Kết quả</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label public">Màn hình công khai</div>
+      <button class="nav-item" data-go="wait"><span class="ni-ic">◷</span> Màn chờ công bố</button>
+      <button class="nav-item" data-go="leaderboard"><span class="ni-ic">♛</span> Bảng xếp hạng (golf)</button>
+    </div>
+
+    <div class="side-foot">
+      Bản mockup duyệt giao diện.<br>Dữ liệu là mẫu. Bấm mục bên trên để xem từng màn.
+    </div>
+  </aside>
+
+  <!-- ================= MAIN ================= -->
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb" id="crumb"><b>Admin</b> · Tổng quan &amp; tiến độ</div>
+      <div class="top-actions">
+        <span class="pill live" id="live-pill" style="display:none">LIVE</span>
+        <div class="who">
+          <span style="color:var(--muted);font-size:12.5px" id="who-role">Admin</span>
+          <span class="avatar" id="who-ava">AD</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="content" id="content-wrap">
+
+      <!-- ===== LOGIN ===== -->
+      <section class="screen" data-screen="login">
+        <div style="max-width:440px;margin:6vh auto 0">
+          <div class="card card-pad" style="text-align:center;padding:36px 30px">
+            <div class="brand-logo" style="width:64px;height:64px;font-size:30px;border-radius:18px;margin:0 auto 20px">A</div>
+            <div class="eyebrow" style="text-align:center">Automotive Hackathon 2026</div>
+            <h1 style="font-size:24px;margin-bottom:8px">Đăng nhập hệ thống</h1>
+            <p class="page-desc" style="margin:0 auto 22px">Nhập mã truy cập được Ban tổ chức cấp. Không cần mật khẩu.</p>
+            <div class="field" style="text-align:left">
+              <label>Mã truy cập</label>
+              <input class="input" style="text-align:center;letter-spacing:.3em;font-family:'Space Grotesk';font-size:18px" value="7KQ2-9FMX" />
+              <div class="hint">Ví dụ: mã gồm 8 ký tự, hoặc mở bằng magic link trong tin nhắn được gửi riêng.</div>
+            </div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px">Vào hệ thống →</button>
+            <div class="divider"></div>
+            <div style="font-size:12px;color:var(--muted-2)">Mã xác định bạn là <b style="color:var(--cyan)">Admin</b> hoặc <b style="color:var(--cyan)">Giám khảo</b> — hệ thống tự điều hướng đúng khu vực.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DASHBOARD ===== -->
+      <section class="screen active" data-screen="dashboard">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow">Admin CMS</div>
+            <div class="page-title">Tổng quan &amp; tiến độ chấm</div>
+            <div class="page-desc">Theo dõi các giám khảo đã chấm xong những đội nào trước khi công bố kết quả.</div>
+          </div>
+          <button class="btn btn-primary" data-go="publish">◉ Công bố kết quả</button>
+        </div>
+
+        <div class="grid stat-row" style="margin-bottom:20px">
+          <div class="card stat"><div class="k">Đội thi</div><div class="v tnum">8</div><div class="d">Vào vòng chung kết</div></div>
+          <div class="card stat cyan"><div class="k">Giám khảo</div><div class="v tnum">5</div><div class="d">4 đang online</div></div>
+          <div class="card stat green"><div class="k">Lượt chấm hoàn tất</div><div class="v tnum">32<span style="font-size:17px;color:var(--muted)">/40</span></div><div class="d">80% tiến độ</div></div>
+          <div class="card stat blue"><div class="k">Trạng thái</div><div class="v" style="font-size:22px;color:var(--amber)">Chưa công bố</div><div class="d">Chờ đủ điểm</div></div>
+        </div>
+
+        <div class="card">
+          <div class="card-pad" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line)">
+            <div><h3 style="font-size:16px">Ma trận tiến độ chấm</h3><div style="font-size:12px;color:var(--muted-2);margin-top:3px">Hàng: đội · Cột: giám khảo</div></div>
+            <div style="display:flex;gap:14px;font-size:11.5px;color:var(--muted)">
+              <span style="display:flex;align-items:center;gap:6px"><span class="cellstat cs-done" style="width:16px;height:16px">✓</span> Đã chấm</span>
+              <span style="display:flex;align-items:center;gap:6px"><span class="cellstat cs-wait" style="width:16px;height:16px"></span> Chưa</span>
+            </div>
+          </div>
+          <div class="matrix">
+            <table id="matrix-table">
+              <thead><tr><th>Đội</th><th>GK. Minh</th><th>GK. Lan</th><th>GK. Sơn</th><th>GK. Hà</th><th>GK. Phúc</th><th style="text-align:right">Tiến độ</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TEAMS ===== -->
+      <section class="screen" data-screen="teams">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow">Admin CMS</div>
+            <div class="page-title">Quản lý đội thi</div>
+            <div class="page-desc">Tạo đội, tải logo, viết mô tả ngắn. Mỗi đội gồm nhiều thành viên.</div>
+          </div>
+          <button class="btn btn-primary">＋ Thêm đội mới</button>
+        </div>
+        <div class="card">
+          <table id="teams-table">
+            <thead><tr><th>Đội</th><th>Thành viên</th><th>Mô tả</th><th style="text-align:right">Thao tác</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== TEAM DETAIL ===== -->
+      <section class="screen" data-screen="team-detail">
+        <div class="page-head">
+          <div>
+            <button class="btn btn-ghost btn-sm" data-go="teams" style="margin-bottom:10px">← Danh sách đội</button>
+            <div class="page-title" style="display:flex;align-items:center;gap:14px">
+              <span class="team-ava" style="width:46px;height:46px;font-size:18px;background:linear-gradient(135deg,#f37021,#ff9730)">EV</span>
+              EV Nexus
+            </div>
+            <div class="page-desc">Xe điện thông minh — nền tảng quản lý pin &amp; định tuyến sạc theo thời gian thực.</div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-sm">✎ Sửa đội</button>
+            <button class="btn btn-primary btn-sm">＋ Thêm thành viên</button>
+          </div>
+        </div>
+
+        <div class="two-col" style="grid-template-columns:1.6fr 1fr;align-items:start">
+          <div>
+            <h3 style="font-size:15px;margin-bottom:14px;color:var(--muted)">Thành viên (4)</h3>
+            <div class="members" id="members-grid"></div>
+          </div>
+          <div class="card card-pad">
+            <h3 style="font-size:15px;margin-bottom:14px">Thông tin đội</h3>
+            <div class="field"><label>Logo đội</label>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="team-ava" style="width:56px;height:56px;font-size:20px;background:linear-gradient(135deg,#f37021,#ff9730)">EV</span>
+                <button class="btn btn-sm">Tải ảnh lên</button>
+              </div>
+            </div>
+            <div class="field"><label>Tên đội</label><input class="input" value="EV Nexus"></div>
+            <div class="field"><label>Mô tả ngắn</label><textarea class="textarea">Nền tảng quản lý pin & định tuyến sạc theo thời gian thực cho xe điện.</textarea></div>
+            <button class="btn btn-primary" style="width:100%;justify-content:center">Lưu thay đổi</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== JUDGES ===== -->
+      <section class="screen" data-screen="judges">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow">Admin CMS</div>
+            <div class="page-title">Tài khoản ban giám khảo</div>
+            <div class="page-desc">Tạo tài khoản, hệ thống tự sinh mã truy cập ngẫu nhiên. Gửi mã (hoặc magic link) cho từng giám khảo.</div>
+          </div>
+          <button class="btn btn-primary">＋ Thêm giám khảo</button>
+        </div>
+        <div class="card">
+          <table id="judges-table">
+            <thead><tr><th>Giám khảo</th><th>Mã truy cập</th><th>Trạng thái</th><th style="text-align:right">Thao tác</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== BAREM ===== -->
+      <section class="screen" data-screen="barem">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow">Admin CMS</div>
+            <div class="page-title">Cấu hình barem chấm điểm</div>
+            <div class="page-desc">Thêm các tiêu chí và điểm tối đa. Tổng điểm tự cộng — không cố định con số. Áp dụng chung cho mọi đội.</div>
+          </div>
+          <button class="btn btn-primary">＋ Thêm tiêu chí</button>
+        </div>
+        <div class="card card-pad">
+          <div id="barem-list"></div>
+          <div class="total-box">
+            <span class="tl">TỔNG ĐIỂM TỐI ĐA</span>
+            <span class="tv tnum" id="barem-total">50<small> điểm</small></span>
+          </div>
+          <div class="hint" style="margin-top:14px">Kéo thả để đổi thứ tự. Điểm cho phép số lẻ (ví dụ 7.5). Barem thật sẽ được nhập khi Ban tổ chức gửi.</div>
+        </div>
+      </section>
+
+      <!-- ===== PUBLISH ===== -->
+      <section class="screen" data-screen="publish">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow">Admin CMS</div>
+            <div class="page-title">Điều khiển công bố</div>
+            <div class="page-desc">Khi công bố, bảng xếp hạng sẽ hiện realtime trên mọi màn hình công khai cùng lúc.</div>
+          </div>
+        </div>
+        <div class="stepper" id="pub-stepper"></div>
+
+        <div class="two-col" style="grid-template-columns:1.4fr 1fr;align-items:start;margin-top:20px">
+          <div class="card card-pad">
+            <h3 style="font-size:16px;margin-bottom:4px">Bước công bố hiện tại</h3>
+            <p style="font-size:12.5px;color:var(--muted-2);margin-bottom:18px">Đổi trạng thái sẽ phát realtime tới mọi màn hình công khai ngay lập tức.</p>
+            <div id="pub-panel"></div>
+          </div>
+          <div class="card card-pad">
+            <h3 style="font-size:15px;margin-bottom:14px">Tình trạng chấm</h3>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div class="mini-stat"><span>Lượt chấm hoàn tất</span><b class="tnum">32/40</b></div>
+              <div class="mini-stat"><span>Trưởng BGK đã chấm</span><b style="color:var(--green)">✓ Xong (đã khoá)</b></div>
+              <div class="mini-stat"><span>Điểm Trưởng BGK</span><b style="color:var(--amber)">🔒 Đang giữ kín</b></div>
+            </div>
+            <div class="note" style="margin-top:18px"><span>ⓘ</span><div>Điểm Trưởng BGK <b>đã được chấm "mù" và khoá</b> từ trước. Nút "Lộ điểm" chỉ trình diễn — không ai sửa được nữa, kết quả đã cố định.</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== JUDGE: TEAMS ===== -->
+      <section class="screen" data-screen="j-teams">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow" style="color:var(--cyan)">Ban giám khảo</div>
+            <div class="page-title">Danh sách đội thi</div>
+            <div class="page-desc">Chọn đội để xem hồ sơ thành viên và chấm điểm. Bạn chỉ thấy điểm của chính mình cho tới khi Ban tổ chức công bố.</div>
+          </div>
+          <div class="seg"><button class="on">Tất cả</button><button>Đã chấm</button><button>Chưa chấm</button></div>
+        </div>
+        <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))" id="j-teams-grid"></div>
+      </section>
+
+      <!-- ===== JUDGE: SCORE ===== -->
+      <section class="screen" data-screen="j-score">
+        <div class="page-head">
+          <div>
+            <button class="btn btn-ghost btn-sm" data-go="j-teams" style="margin-bottom:10px">← Danh sách đội</button>
+            <div class="page-title" style="display:flex;align-items:center;gap:14px">
+              <span class="team-ava" style="width:44px;height:44px;font-size:17px;background:linear-gradient(135deg,#2563eb,#00d4ff)">CV</span>
+              Chấm điểm · CarVision AI
+            </div>
+          </div>
+          <span class="pill pending">Chưa nộp</span>
+        </div>
+        <div class="two-col" style="grid-template-columns:1.5fr 1fr;align-items:start">
+          <div class="card card-pad">
+            <h3 style="font-size:15px;margin-bottom:6px">Barem — nhập điểm từng tiêu chí</h3>
+            <div id="score-crits"></div>
+            <div class="total-box">
+              <span class="tl">TỔNG ĐIỂM CỦA BẠN</span>
+              <span class="tv tnum" id="score-total">—<small>/50</small></span>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:18px">
+              <button class="btn" style="flex:1;justify-content:center">Lưu nháp</button>
+              <button class="btn btn-primary" style="flex:1;justify-content:center">Nộp điểm đội này</button>
+            </div>
+            <div class="hint" style="margin-top:12px">Sau khi nộp bạn vẫn sửa được cho tới khi Ban tổ chức công bố.</div>
+          </div>
+          <div class="card card-pad">
+            <h3 style="font-size:15px;margin-bottom:12px">Hồ sơ đội</h3>
+            <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px">Nhận diện vật cản &amp; biển báo bằng thị giác máy tính cho hệ thống hỗ trợ lái.</p>
+            <h4 style="font-size:12px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Thành viên</h4>
+            <div style="display:flex;flex-direction:column;gap:10px" id="score-members"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== JUDGE: RESULT ===== -->
+      <section class="screen" data-screen="j-result">
+        <div class="page-head">
+          <div>
+            <div class="eyebrow" style="color:var(--cyan)">Ban giám khảo</div>
+            <div class="page-title">Kết quả các đội</div>
+            <div class="page-desc">Hiển thị sau khi Ban tổ chức công bố. Điểm mỗi đội là trung bình cộng của tất cả giám khảo.</div>
+          </div>
+          <span class="pill live">Đã công bố</span>
+        </div>
+        <div class="card">
+          <div class="matrix">
+          <table id="result-table">
+            <thead><tr><th>#</th><th>Đội</th><th style="text-align:center">GK. Minh</th><th style="text-align:center">GK. Lan</th><th style="text-align:center">GK. Sơn</th><th style="text-align:center">GK. Hà</th><th style="text-align:center">GK. Phúc</th><th style="text-align:right">Trung bình</th></tr></thead>
+            <tbody></tbody>
+          </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PUBLIC WAIT ===== -->
+      <section class="screen" data-screen="wait" data-full="1"></section>
+
+      <!-- ===== PUBLIC LEADERBOARD ===== -->
+      <section class="screen" data-screen="leaderboard" data-full="1"></section>
+
+    </div>
+  </div>
+</div>
+
+<div class="demo-hint" id="demo-hint" style="display:none">
+  <div style="display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border:1px solid var(--line-strong);border-radius:12px;padding:8px;box-shadow:0 12px 30px -14px rgba(23,54,120,.4)">
+    <span style="font-size:11px;color:var(--muted-2);padding:0 4px 0 6px;font-weight:600">DEMO KỊCH BẢN:</span>
+    <button class="btn btn-sm" id="jitter-btn">① Điểm tạm nhảy</button>
+    <button class="btn btn-primary btn-sm" id="reveal-btn">② ♛ Lộ điểm Trưởng BGK</button>
+    <button class="btn btn-ghost btn-sm" id="reset-btn">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+/* ---------------- Sample data ---------------- */
+const TEAMS = [
+  {code:"EV", name:"EV Nexus",     tag:"Quản lý pin & định tuyến sạc",      g:"linear-gradient(135deg,#f37021,#ff9730)", members:4, prov:46.0, score:47.2},
+  {code:"CV", name:"CarVision AI", tag:"Thị giác máy tính hỗ trợ lái",       g:"linear-gradient(135deg,#2563eb,#00d4ff)", members:5, prov:47.5, score:46.4},
+  {code:"RM", name:"RoadMind",     tag:"Định tuyến giao thông thông minh",   g:"linear-gradient(135deg,#a855f7,#2563eb)", members:3, prov:44.0, score:45.0},
+  {code:"AP", name:"AutoPilot X",  tag:"Điều khiển tự hành cấp độ 2",        g:"linear-gradient(135deg,#00d4ff,#06b6d4)", members:4, prov:45.5, score:45.0},
+  {code:"TX", name:"TorqueX",      tag:"Tối ưu hộp số & tiêu hao",           g:"linear-gradient(135deg,#ef4444,#f37021)", members:4, prov:41.0, score:42.6},
+  {code:"C9", name:"Chassis 9",    tag:"Cảm biến khung gầm IoT",             g:"linear-gradient(135deg,#3ecf6a,#06b6d4)", members:3, prov:43.5, score:41.8},
+  {code:"VL", name:"Vroom Labs",   tag:"Trợ lý giọng nói trên xe",           g:"linear-gradient(135deg,#ff9730,#a855f7)", members:5, prov:40.0, score:39.5},
+  {code:"SD", name:"Smart Drive",  tag:"Cảnh báo va chạm chủ động",          g:"linear-gradient(135deg,#2563eb,#3ecf6a)", members:4, prov:42.0, score:38.9},
+];
+const JUDGES = [
+  {name:"Nguyễn Văn Minh", code:"7KQ2-9FMX", on:true,  head:true},
+  {name:"Trần Thị Lan",    code:"H4RP-2XVA", on:true},
+  {name:"Lê Hoàng Sơn",    code:"9BQW-M3KD", on:true},
+  {name:"Phạm Thu Hà",     code:"XZ58-QP7N", on:false},
+  {name:"Đỗ Minh Phúc",    code:"KD31-7WLF", on:true},
+];
+const BAREM = [
+  {n:"Chất lượng code",   d:"Cấu trúc rõ ràng, sạch, dễ bảo trì", max:10},
+  {n:"Chạy không lỗi",    d:"Sản phẩm chạy ổn định, không giới hạn", max:10},
+  {n:"Tính sáng tạo",     d:"Ý tưởng độc đáo, khác biệt", max:10},
+  {n:"Tính ứng dụng",     d:"Khả năng áp dụng thực tế ngành ô tô", max:10},
+  {n:"Thuyết trình",      d:"Trình bày mạch lạc, thuyết phục", max:10},
+];
+const MEMBERS = [
+  {i:"NA", n:"Nguyễn An",   r:"Trưởng nhóm · Backend", org:"ĐH Bách Khoa HN", intro:"5 năm kinh nghiệm hệ thống phân tán, dẫn dắt kiến trúc backend của đội."},
+  {i:"TB", n:"Trần Bình",   r:"AI Engineer",           org:"FPT Software",     intro:"Chuyên thị giác máy tính, phụ trách mô hình nhận diện."},
+  {i:"LC", n:"Lê Chi",      r:"Frontend · Design",     org:"ĐH FPT",           intro:"Thiết kế trải nghiệm & dashboard điều khiển thời gian thực."},
+  {i:"PD", n:"Phạm Dũng",   r:"Embedded",              org:"ĐH Bách Khoa TP.HCM", intro:"Kết nối phần cứng cảm biến với nền tảng đám mây."},
+];
+const JUDGE_COLS = ["Minh","Lan","Sơn","Hà","Phúc"];
+
+/* ---------------- Render helpers ---------------- */
+const $=(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+function av(t){return `<span class="team-ava" style="background:${t.g}">${t.code}</span>`}
+
+/* Dashboard matrix */
+(function(){
+  const done=[[1,1,1,1,1],[1,1,1,0,1],[1,1,1,1,1],[1,1,0,1,1],[1,1,1,0,1],[1,0,1,1,1],[1,1,0,0,1],[1,1,1,0,0]];
+  $("#matrix-table tbody").innerHTML=TEAMS.map((t,i)=>{
+    const cells=done[i].map(d=>`<td style="text-align:center"><span class="cellstat ${d?'cs-done':'cs-wait'}">${d?'✓':''}</span></td>`).join("");
+    const c=done[i].reduce((a,b)=>a+b,0);const pct=c/5*100;
+    return `<tr><td><div class="tcell">${av(t)}<div><b>${t.name}</b></div></div></td>${cells}
+      <td style="text-align:right"><div style="display:flex;align-items:center;gap:10px;justify-content:flex-end"><div class="bar" style="width:80px"><i style="width:${pct}%"></i></div><span class="tnum" style="color:var(--muted);font-size:12px">${c}/5</span></div></td></tr>`;
+  }).join("");
+})();
+
+/* Teams table */
+$("#teams-table tbody").innerHTML=TEAMS.map(t=>`
+  <tr><td><div class="tcell">${av(t)}<div><b>${t.name}</b><small>${t.tag}</small></div></div></td>
+  <td class="tnum">${t.members} người</td>
+  <td style="color:var(--muted);max-width:280px">${t.tag}</td>
+  <td style="text-align:right"><button class="btn btn-sm" data-go="team-detail">Xem</button> <button class="btn btn-sm btn-danger">Xoá</button></td></tr>`).join("");
+
+/* Members grid */
+$("#members-grid").innerHTML=MEMBERS.map(m=>`
+  <div class="card member">
+    <div class="m-top"><span class="m-photo">${m.i}</span><div><div class="m-name">${m.n}</div><div class="m-role">${m.r}</div></div></div>
+    <div class="m-meta">◔ ${m.org}<br>✉ ${m.n.toLowerCase().replace(/ /g,".")}@team.vn</div>
+    <div class="m-intro">${m.intro}</div>
+  </div>`).join("");
+
+/* Judges table */
+$("#judges-table tbody").innerHTML=JUDGES.map(j=>`
+  <tr><td><div class="tcell"><span class="avatar" style="background:${j.head?'var(--grad-brand)':'linear-gradient(135deg,#2563eb,#00d4ff)'};${j.head?'color:#3a1400':''}">${j.name.split(" ").pop()[0]}</span><div><b>${j.name}</b>${j.head?' <span class="badge-head">♛ Trưởng BGK</span>':''}${j.head?'<small style="display:block;color:var(--muted-2);font-size:11px;margin-top:2px">Lá bài quyết định — điểm giữ kín tới phút chót</small>':''}</div></div></td>
+  <td><span class="code-chip">${j.code} <span style="cursor:pointer;color:var(--muted)">⧉</span></span></td>
+  <td><span class="pill ${j.on?'live':'wait'}">${j.on?'Đang online':'Ngoại tuyến'}</span></td>
+  <td style="text-align:right"><button class="btn btn-sm">↻ Đổi mã</button> ${j.head?'':'<button class="btn btn-sm btn-danger">Xoá</button>'}</td></tr>`).join("");
+
+/* Barem list */
+$("#barem-list").innerHTML=BAREM.map((b,i)=>`
+  <div class="crit">
+    <div style="display:flex;gap:14px;align-items:center">
+      <span style="color:var(--muted-2);cursor:grab;font-size:18px">⋮⋮</span>
+      <div><div class="crit-name">${b.n}</div><div class="crit-desc">${b.d}</div></div>
+    </div>
+    <div class="score-in"><input class="input" value="${b.max}"><span>điểm</span><button class="btn btn-ghost btn-sm">✕</button></div>
+  </div>`).join("");
+
+/* Score entry */
+$("#score-crits").innerHTML=BAREM.map((b,i)=>`
+  <div class="crit">
+    <div><div class="crit-name">${b.n} <span class="crit-max">/ ${b.max}đ</span></div><div class="crit-desc">${b.d}</div></div>
+    <div class="score-in"><input class="input sc-in" data-max="${b.max}" value="${[9,8.5,9,8,8][i]}"><span>/ ${b.max}</span></div>
+  </div>`).join("");
+$("#score-members").innerHTML=MEMBERS.map(m=>`<div style="display:flex;gap:10px;align-items:center"><span class="m-photo" style="width:34px;height:34px;font-size:12px">${m.i}</span><div><div style="font-size:13px;font-weight:600">${m.n}</div><div style="font-size:11px;color:var(--cyan)">${m.r}</div></div></div>`).join("");
+function recalcScore(){let s=0;$$(".sc-in").forEach(i=>s+=parseFloat(i.value)||0);$("#score-total").innerHTML=`${s.toFixed(1)}<small>/50</small>`}
+$("#score-crits").addEventListener("input",recalcScore);recalcScore();
+
+/* Judge result table */
+(function(){
+  const rows=[...TEAMS].sort((a,b)=>b.score-a.score);
+  $("#result-table tbody").innerHTML=rows.map((t,i)=>{
+    const js=[0,0,0,0,0].map((_,k)=>(t.score+[.6,-.4,.2,-.6,.4][k]).toFixed(1));
+    return `<tr><td class="tnum" style="color:var(--muted)">${i+1}</td>
+     <td><div class="tcell">${av(t)}<div><b>${t.name}</b></div></div></td>
+     ${js.map(v=>`<td style="text-align:center" class="tnum">${v}</td>`).join("")}
+     <td style="text-align:right"><b class="tnum" style="font-family:'Space Grotesk';font-size:16px;color:var(--orange-lt)">${t.score.toFixed(1)}</b></td></tr>`;
+  }).join("");
+})();
+
+/* Judge team cards */
+$("#j-teams-grid").innerHTML=TEAMS.map((t,i)=>{
+  const scored=i%3!==2;
+  return `<div class="card card-pad" style="cursor:pointer" data-go="j-score">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div class="tcell">${av(t)}<div><b style="font-family:'Space Grotesk';font-size:16px">${t.name}</b><small>${t.members} thành viên</small></div></div>
+      <span class="pill ${scored?'done':'pending'}">${scored?'Đã nộp':'Chưa nộp'}</span>
+    </div>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.5">${t.tag}</p>
+    <div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;color:var(--muted-2)">${scored?'Điểm của bạn':'Chưa chấm'}</span>
+      <span class="tnum" style="font-family:'Space Grotesk';font-weight:700;font-size:18px;color:${scored?'var(--cyan)':'var(--muted-2)'}">${scored?(t.score-.3).toFixed(1):'—'}</span>
+    </div>
+  </div>`;
+}).join("");
+
+/* ---------------- Public: waiting ---------------- */
+$('[data-screen="wait"]').innerHTML=`
+  <div class="wait-stage">
+    <div class="wait-inner">
+      <div class="wait-badge">A</div>
+      <div class="eyebrow" style="text-align:center;color:var(--cyan)">Automotive Hackathon 2026 · Chung kết</div>
+      <h1 class="wait-title">Kết quả sắp được <span>công bố</span></h1>
+      <p class="wait-desc">Ban giám khảo đang hoàn tất chấm điểm. Bảng xếp hạng sẽ xuất hiện ngay tại đây khi Ban tổ chức công bố.</p>
+      <div class="dots-live"><i></i> ĐANG CHỜ TÍN HIỆU CÔNG BỐ</div>
+    </div>
+  </div>`;
+
+/* ---------------- Public: leaderboard (2 pha + podium) ---------------- */
+let lbPhase="prov";  // 'prov' | 'final'
+let lbData=TEAMS.map(t=>({...t,cur:t.prov,lastRank:null}));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+function computeRanks(sorted){ // golf ties
+  let ranks=[],lastScore=null,lastRank=0;
+  sorted.forEach((t,i)=>{let r;if(t.cur===lastScore){r=lastRank;}else{r=i+1;lastRank=r;lastScore=t.cur;}ranks.push(r);});
+  const tie={};ranks.forEach(r=>tie[r]=(tie[r]||0)+1);
+  return {ranks,tie};
+}
+function rowHtml(t,rank,tied,move){
+  const mv= move>0?`<span class="rk-move mv-up">▲${move}</span>`:move<0?`<span class="rk-move mv-down">▼${-move}</span>`:`<span class="rk-move mv-same">▬</span>`;
+  const onDots=lbPhase==="final"?5:4;
+  const jdots=[0,1,2,3,4].map(k=>`<span class="jd ${k<onDots?'on':''}" ${k===4&&lbPhase!=='final'?'style="background:rgba(255,176,32,.35)"':''}></span>`).join("");
+  return `<div class="row ${rank===1&&lbPhase==='final'?'leader':''} ${rank<=3?'top3':''}">
+    <div class="rk"><span class="rk-num tnum">${tied?'T'+rank:rank}</span>${lbPhase==='final'?mv:''}</div>
+    <div class="r-team"><span class="r-logo" style="background:${t.g}">${t.code}</span><div style="min-width:0"><div class="r-name">${t.name}</div><div class="r-tag">${t.tag}</div></div></div>
+    <div class="r-score"><div><span class="sc tnum">${t.cur.toFixed(1)}</span><span class="of"> /50</span></div><div class="judge-dots" title="${onDots}/5 giám khảo">${jdots}</div></div>
+  </div>`;
+}
+function podiumHtml(top3){
+  const order=[top3[1],top3[0],top3[2]]; // 2 - 1 - 3
+  const cls=["pod-2","pod-1","pod-3"],medal=["2","1","3"],rk=["#2","#1","#3"];
+  return `<div class="podium">`+order.map((t,i)=>{
+    if(!t)return `<div class="pod ${cls[i]}"></div>`;
+    return `<div class="pod ${cls[i]}">
+      <div class="pod-body">
+        ${cls[i]==='pod-1'?'<div class="pod-crown">👑</div>':''}
+        <div class="pod-medal">${medal[i]}</div>
+        <div class="pod-logo" style="background:${t.g}">${t.code}</div>
+        <div class="pod-name">${t.name}</div>
+        <div class="pod-tag">${t.tag}</div>
+        <div class="pod-score tnum">${t.cur.toFixed(1)}<small> /50</small></div>
+      </div>
+      <div class="pod-riser"></div>
+    </div>`;
+  }).join("")+`</div>`;
+}
+function renderLB(){
+  const sorted=[...lbData].sort((a,b)=>b.cur-a.cur||a.name.localeCompare(b.name));
+  const {ranks,tie}=computeRanks(sorted);
+  let body="";
+  if(lbPhase==="prov"){
+    body+=`<div class="prov-banner">
+      <span class="pb-ic">⏳</span>
+      <div><b>ĐIỂM TẠM — chưa có điểm Trưởng Ban giám khảo</b><p>Bảng đang cập nhật realtime theo từng giám khảo nộp điểm. Kết quả chung cuộc sẽ chốt khi lộ điểm Trưởng BGK.</p></div>
+      <span class="prov-tag">4/5 GIÁM KHẢO</span>
+    </div>`;
+  }else{
+    body+=podiumHtml([sorted[0],sorted[1],sorted[2]]);
+  }
+  body+=`<div class="lb" id="lb">`+sorted.map((t,i)=>{
+    const move=t.lastRank==null?0:(t.lastRank-ranks[i]);
+    return rowHtml(t,ranks[i],tie[ranks[i]]>1,move);
+  }).join("")+`</div>`;
+  $("#lb-body").innerHTML=body;
+  sorted.forEach((t,i)=>{t.lastRank=ranks[i];});
+  const st=$("#lb-status");
+  if(st){st.textContent=lbPhase==="final"?"● CHUNG CUỘC":"● ĐIỂM TẠM · LIVE";st.style.color=lbPhase==="final"?"var(--orange-lt)":"var(--cyan)";}
+}
+function jitterProv(){ // mô phỏng điểm nhảy khi BGK đang chấm
+  if(lbPhase!=="prov"){resetProv();}
+  lbData.forEach(t=>{t.cur=clamp(+(t.cur+(Math.random()*3-1.5)).toFixed(1),34,49.5);});
+  renderLB();
+}
+function revealHead(){ // MC hô + Admin bấm → lộ điểm Trưởng BGK
+  lbPhase="final";
+  lbData.forEach(t=>{t.cur=t.score;});
+  renderLB();
+  $("#live-pill").textContent="CHUNG CUỘC";
+}
+function resetProv(){
+  lbPhase="prov";
+  lbData.forEach(t=>{t.cur=t.prov;t.lastRank=null;});
+  renderLB();
+  $("#live-pill").textContent="LIVE";
+}
+$('[data-screen="leaderboard"]').innerHTML=`
+  <div class="public-stage">
+    <div class="pub-head">
+      <div>
+        <div class="eyebrow" style="color:var(--cyan)">Vòng chung kết · Bảng xếp hạng trực tiếp</div>
+        <div class="pub-title">Automotive <span>Hackathon</span> 2026</div>
+        <div class="pub-sub">Điểm cao nhất giành ngôi vô địch · cập nhật theo thời gian thực</div>
+      </div>
+      <span class="pill live" id="lb-status" style="font-size:13px;padding:8px 16px">● ĐIỂM TẠM · LIVE</span>
+    </div>
+    <div id="lb-body"></div>
+  </div>`;
+renderLB();
+
+/* ---------------- Publish control (3 trạng thái) ---------------- */
+let pubState="provisional"; // drafting | provisional | final
+const PUB_STEPS=[
+  {k:"drafting",n:"1",t:"Đang chấm",d:"BGK nhập điểm. Màn công khai hiện màn chờ."},
+  {k:"provisional",n:"2",t:"Điểm tạm",d:"Bảng nhảy realtime — trừ điểm Trưởng BGK."},
+  {k:"final",n:"3",t:"Chung cuộc",d:"Lộ điểm Trưởng BGK → podium top 3, khoá kết quả."},
+];
+function renderPub(){
+  const idx=PUB_STEPS.findIndex(s=>s.k===pubState);
+  $("#pub-stepper").innerHTML=PUB_STEPS.map((s,i)=>`
+    <div class="step ${i===idx?'active':''} ${i<idx?'done':''}">
+      <div class="step-n">${i<idx?'✓':s.n}</div><h4>${s.t}</h4><p>${s.d}</p>
+    </div>`).join("");
+  const P=$("#pub-panel");
+  if(pubState==="drafting"){
+    P.innerHTML=`<div class="note" style="margin-bottom:16px"><span>⏳</span><div>Các giám khảo đang chấm điểm. Khán giả đang xem <b>màn chờ</b>.</div></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" onclick="setPub('provisional')">▶ Mở bảng điểm tạm (realtime)</button>`;
+  }else if(pubState==="provisional"){
+    P.innerHTML=`<div class="note" style="margin-bottom:16px;background:rgba(255,176,32,.08);border-color:rgba(255,176,32,.25)"><span style="color:var(--amber)">◉</span><div><b style="color:var(--text)">Đang chiếu điểm tạm.</b> Khán giả thấy điểm nhảy realtime (4/5 giám khảo). Điểm Trưởng BGK đang giữ kín.</div></div>
+      <p style="font-size:12px;color:var(--muted-2);margin-bottom:10px">🎤 Khi MC hô — bấm nút dưới để lộ lá bài cuối:</p>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px;font-size:15px" onclick="setPub('final')">♛ LỘ ĐIỂM TRƯỞNG BGK &amp; CHỐT KẾT QUẢ</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px" onclick="setPub('drafting')">← Quay lui về màn chờ</button>`;
+  }else{
+    P.innerHTML=`<div class="note" style="margin-bottom:16px;background:rgba(62,207,106,.08);border-color:rgba(62,207,106,.3)"><span style="color:var(--green)">✓</span><div><b style="color:var(--text)">Đã công bố chung cuộc.</b> Podium top 3 đang hiển thị. Các giám khảo xem được điểm của nhau.</div></div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px" data-go="leaderboard">Xem bảng công khai →</button>
+      <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px" onclick="setPub('provisional')">← Quay lui (mở lại để sửa)</button>`;
+  }
+}
+function setPub(s){
+  pubState=s;
+  if(s==="final"){lbPhase="final";lbData.forEach(t=>t.cur=t.score);}
+  else{lbPhase="prov";lbData.forEach(t=>{t.cur=t.prov;t.lastRank=null;});}
+  $("#live-pill").textContent=s==="final"?"CHUNG CUỘC":"LIVE";
+  renderLB();renderPub();
+}
+renderPub();
+
+/* ---------------- Navigation ---------------- */
+const ROLE={
+  login:["Chung","Đăng nhập","AD","Khách"],
+  dashboard:["Admin","Tổng quan & tiến độ","AD","Admin"],
+  teams:["Admin","Quản lý đội thi","AD","Admin"],
+  "team-detail":["Admin","Chi tiết đội","AD","Admin"],
+  judges:["Admin","Tài khoản BGK","AD","Admin"],
+  barem:["Admin","Cấu hình barem","AD","Admin"],
+  publish:["Admin","Điều khiển công bố","AD","Admin"],
+  "j-teams":["Ban giám khảo","Danh sách đội","ML","GK. Minh"],
+  "j-score":["Ban giám khảo","Nhập điểm","ML","GK. Minh"],
+  "j-result":["Ban giám khảo","Kết quả","ML","GK. Minh"],
+  wait:["Công khai","Màn chờ công bố","","Khán giả"],
+  leaderboard:["Công khai","Bảng xếp hạng","","Khán giả"],
+};
+function go(name){
+  $$(".screen").forEach(s=>s.classList.toggle("active",s.dataset.screen===name));
+  $$(".nav-item").forEach(n=>n.classList.toggle("active",n.dataset.go===name));
+  const r=ROLE[name]||["",""];
+  $("#crumb").innerHTML=`<b>${r[0]}</b> · ${r[1]}`;
+  $("#who-role").textContent=r[3];
+  $("#who-ava").textContent=r[2]||"👁";
+  const full=$(`[data-screen="${name}"]`).dataset.full==="1";
+  $("#content-wrap").style.padding=full?"0":"30px 40px";
+  $("#content-wrap").style.maxWidth="none";
+  $("#live-pill").style.display=name==="leaderboard"?"inline-flex":"none";
+  $("#demo-hint").style.display=name==="leaderboard"?"block":"none";
+  window.scrollTo(0,0);
+}
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-go]");
+  if(b){e.preventDefault();go(b.dataset.go);}
+});
+$("#jitter-btn").addEventListener("click",jitterProv);
+$("#reveal-btn").addEventListener("click",revealHead);
+$("#reset-btn").addEventListener("click",resetProv);
+</script>
+</body>
+</html>
