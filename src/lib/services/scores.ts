@@ -29,6 +29,16 @@ export async function upsertScores(
     })
   ));
 }
+// Team ids the given judge has already SUBMITTED (used to mark done teams in the judge UI).
+export async function judgeSubmittedTeamIds(judgeId: string): Promise<string[]> {
+  const rows = await prisma.score.findMany({
+    where: { judgeId, submitted: true },
+    select: { teamId: true },
+    distinct: ['teamId'],
+  });
+  return rows.map((r) => r.teamId);
+}
+
 // Returns the (judge, team) pairs a judge has SUBMITTED. Uses distinct instead of
 // groupBy(_max: boolean) because Postgres has no max(boolean) aggregate.
 export async function judgeProgress() {

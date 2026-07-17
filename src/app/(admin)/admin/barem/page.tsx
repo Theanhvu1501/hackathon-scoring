@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { fetcher } from '@/lib/ui';
 import Modal from '@/components/Modal';
+import { useConfirm } from '@/components/ConfirmProvider';
 
 type Criterion = { id: string; name: string; description?: string | null; maxScore: number };
 const EMPTY = { name: '', description: '', maxScore: 10 };
@@ -11,6 +12,7 @@ export default function Barem() {
   const [modal, setModal] = useState<null | 'add' | Criterion>(null);
   const [form, setForm] = useState<{ name: string; description: string; maxScore: number }>(EMPTY);
   const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
 
   async function load() { setCrits(await fetcher('/api/criteria')); }
   useEffect(() => { load(); }, []);
@@ -29,13 +31,15 @@ export default function Barem() {
       setModal(null); await load();
     } finally { setBusy(false); }
   }
-  async function del(id: string) { if (!confirm('Xoá tiêu chí này?')) return; await fetcher('/api/criteria/' + id, { method: 'DELETE' }); load(); }
+  async function del(c: Criterion) {
+    if (!(await confirm({ title: 'Xoá tiêu chí', message: `Xoá tiêu chí "${c.name}" khỏi barem?`, confirmText: 'Xoá', danger: true }))) return;
+    await fetcher('/api/criteria/' + c.id, { method: 'DELETE' }); load();
+  }
 
   return (
     <>
       <div className="page-head">
-        <div><div className="eyebrow">Admin CMS</div><div className="page-title">Cấu hình barem chấm điểm</div>
-          <div className="page-desc">Danh sách tiêu chí và điểm tối đa. Tổng điểm tự cộng — không cố định con số.</div></div>
+        <p className="page-desc">Danh sách tiêu chí và điểm tối đa. Tổng điểm tự cộng — không cố định con số.</p>
         <button className="btn btn-primary" onClick={openAdd}>＋ Thêm tiêu chí</button>
       </div>
 
@@ -46,7 +50,7 @@ export default function Barem() {
             <div><div className="crit-name">{c.name} <span className="crit-max">/ {c.maxScore}đ</span></div><div className="crit-desc">{c.description}</div></div>
             <div className="score-in">
               <button className="btn btn-sm" onClick={() => openEdit(c)}>Sửa</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(c.id)}>Xoá</button>
+              <button className="btn btn-sm btn-danger" onClick={() => del(c)}>Xoá</button>
             </div>
           </div>
         ))}

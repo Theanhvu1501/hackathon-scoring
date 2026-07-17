@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetcher } from '@/lib/ui';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
+import { useConfirm } from '@/components/ConfirmProvider';
 
 type Judge = { id: string; name: string; isHead: boolean; accessCode: string };
 
@@ -12,6 +13,7 @@ export default function Judges() {
   const [modal, setModal] = useState<null | 'add' | Judge>(null);
   const [form, setForm] = useState({ name: '', isHead: false });
   const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
 
   async function load() { setJudges(await fetcher('/api/judges')); }
   useEffect(() => { load(); }, []);
@@ -32,7 +34,10 @@ export default function Judges() {
     } finally { setBusy(false); }
   }
   async function regen(id: string) { await fetcher('/api/judges/' + id, { method: 'POST', body: JSON.stringify({ action: 'regen' }) }); load(); }
-  async function del(id: string) { if (!confirm('Xoá giám khảo này?')) return; await fetcher('/api/judges/' + id, { method: 'DELETE' }); load(); }
+  async function del(j: Judge) {
+    if (!(await confirm({ title: 'Xoá giám khảo', message: `Xoá giám khảo "${j.name}"? Điểm đã chấm của người này sẽ bị xoá.`, confirmText: 'Xoá', danger: true }))) return;
+    await fetcher('/api/judges/' + j.id, { method: 'DELETE' }); load();
+  }
 
   const columns: Column<Judge>[] = [
     { key: 'name', header: 'Giám khảo', filterText: (j) => j.name, render: (j) => (
@@ -43,15 +48,14 @@ export default function Judges() {
       <span style={{ whiteSpace: 'nowrap' }}>
         <button className="btn btn-sm" onClick={() => openEdit(j)}>Sửa</button>{' '}
         <button className="btn btn-sm" onClick={() => regen(j.id)}>↻ Đổi mã</button>{' '}
-        {!j.isHead && <button className="btn btn-sm btn-danger" onClick={() => del(j.id)}>Xoá</button>}
+        {!j.isHead && <button className="btn btn-sm btn-danger" onClick={() => del(j)}>Xoá</button>}
       </span>
     ) },
   ];
 
   return (
     <>
-      <div className="page-head"><div><div className="eyebrow">Admin CMS</div><div className="page-title">Tài khoản ban giám khảo</div>
-        <div className="page-desc">Mỗi giám khảo có một mã truy cập cố định. Đúng một Trưởng BGK (lá bài quyết định).</div></div></div>
+      <p className="page-desc" style={{ marginBottom: 16 }}>Mỗi giám khảo có một mã truy cập cố định. Đúng một Trưởng BGK (lá bài quyết định).</p>
 
       <DataTable
         columns={columns} rows={shown} getId={(j) => j.id}

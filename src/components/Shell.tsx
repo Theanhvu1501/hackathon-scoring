@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { cx } from '@/lib/ui';
+import ConfirmProvider from '@/components/ConfirmProvider';
 
 const ADMIN_NAV = [
   { href: '/admin', label: 'Tổng quan & tiến độ', ic: '▦' },
@@ -36,6 +37,21 @@ function buildCrumbs(path: string, role: 'admin' | 'judge'): Crumb[] {
   return items;
 }
 
+function pageTitle(path: string): { ic: string; t: string } {
+  if (path.startsWith('/admin/teams/')) return { ic: '◈', t: 'Chi tiết đội' };
+  if (path.startsWith('/judge/score/')) return { ic: '✎', t: 'Chấm điểm' };
+  const map: Record<string, { ic: string; t: string }> = {
+    '/admin': { ic: '▦', t: 'Tổng quan & tiến độ' },
+    '/admin/teams': { ic: '◈', t: 'Quản lý đội thi' },
+    '/admin/judges': { ic: '◐', t: 'Tài khoản ban giám khảo' },
+    '/admin/barem': { ic: '＃', t: 'Cấu hình barem' },
+    '/admin/publish': { ic: '◉', t: 'Điều khiển công bố' },
+    '/judge': { ic: '◈', t: 'Danh sách đội thi' },
+    '/judge/results': { ic: '≡', t: 'Kết quả chấm điểm' },
+  };
+  return map[path] || { ic: '▦', t: 'Automotive Hackathon 2026' };
+}
+
 export default function Shell({
   role, userName = '', children,
 }: {
@@ -47,6 +63,7 @@ export default function Shell({
   const router = useRouter();
   const nav = role === 'admin' ? ADMIN_NAV : JUDGE_NAV;
   const crumbs = buildCrumbs(path, role);
+  const title = pageTitle(path);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -87,18 +104,10 @@ export default function Shell({
 
       <div className="main">
         <div className="topbar">
-          <nav className="breadcrumb" aria-label="Breadcrumb">
-            <span className="crumb-ic">▦</span>
-            {crumbs.map((c, i) => {
-              const last = i === crumbs.length - 1;
-              return (
-                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                  {c.href && !last ? <Link href={c.href}>{c.label}</Link> : <span className={last ? 'cur' : undefined}>{c.label}</span>}
-                  {!last && <span className="sep">›</span>}
-                </span>
-              );
-            })}
-          </nav>
+          <div className="topbar-title">
+            <span className="tt-ic">{title.ic}</span>
+            <h1>{title.t}</h1>
+          </div>
 
           <div className="top-actions">
             <div className="usermenu" ref={menuRef}>
@@ -122,7 +131,21 @@ export default function Shell({
           </div>
         </div>
 
-        <div className="content">{children}</div>
+        <div className="subbar">
+          <nav className="breadcrumb" aria-label="Breadcrumb">
+            {crumbs.map((c, i) => {
+              const last = i === crumbs.length - 1;
+              return (
+                <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  {c.href && !last ? <Link href={c.href}>{c.label}</Link> : <span className={last ? 'cur' : undefined}>{c.label}</span>}
+                  {!last && <span className="sep">›</span>}
+                </span>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="content"><ConfirmProvider>{children}</ConfirmProvider></div>
       </div>
     </div>
   );

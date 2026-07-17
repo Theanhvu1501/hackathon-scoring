@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import Modal from '@/components/Modal';
+import { useConfirm } from '@/components/ConfirmProvider';
 
 type Member = { id: string; name: string; teamRole?: string | null; org?: string | null; email?: string | null; phone?: string | null; intro?: string | null };
 type Team = { id: string; name: string; code: string; tag?: string | null; members: Member[] };
@@ -13,6 +14,7 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
   const [modal, setModal] = useState<null | 'add' | Member>(null);
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
 
   async function load() {
     const all: Team[] = await fetcher('/api/teams');
@@ -34,9 +36,9 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
       setModal(null); await load();
     } finally { setBusy(false); }
   }
-  async function del(id: string) {
-    if (!confirm('Xoá thành viên này?')) return;
-    await fetcher('/api/members/' + id, { method: 'DELETE' }); load();
+  async function del(m: Member) {
+    if (!(await confirm({ title: 'Xoá thành viên', message: `Xoá thành viên "${m.name}" khỏi đội?`, confirmText: 'Xoá', danger: true }))) return;
+    await fetcher('/api/members/' + m.id, { method: 'DELETE' }); load();
   }
 
   if (!team) return <div className="card card-pad">Đang tải…</div>;
@@ -68,7 +70,7 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
             {m.intro && <div className="m-intro">{m.intro}</div>}
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-sm" style={{ flex: 1, justifyContent: 'center' }} onClick={() => openEdit(m)}>Sửa</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(m.id)}>Xoá</button>
+              <button className="btn btn-sm btn-danger" onClick={() => del(m)}>Xoá</button>
             </div>
           </div>
         ))}

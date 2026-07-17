@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
+import { useConfirm } from '@/components/ConfirmProvider';
 
 type Team = { id: string; name: string; code: string; tag?: string | null; members?: any[] };
 const EMPTY = { name: '', code: '', tag: '' };
@@ -13,6 +14,7 @@ export default function Teams() {
   const [modal, setModal] = useState<null | 'add' | Team>(null);
   const [form, setForm] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
+  const confirm = useConfirm();
 
   async function load() { setTeams(await fetcher('/api/teams')); }
   useEffect(() => { load(); }, []);
@@ -29,9 +31,9 @@ export default function Teams() {
       setModal(null); await load();
     } finally { setBusy(false); }
   }
-  async function del(id: string) {
-    if (!confirm('Xoá đội này? Toàn bộ thành viên và điểm sẽ bị xoá.')) return;
-    await fetcher('/api/teams/' + id, { method: 'DELETE' }); load();
+  async function del(t: Team) {
+    if (!(await confirm({ title: 'Xoá đội thi', message: `Xoá đội "${t.name}"? Toàn bộ thành viên và điểm của đội sẽ bị xoá vĩnh viễn.`, confirmText: 'Xoá đội', danger: true }))) return;
+    await fetcher('/api/teams/' + t.id, { method: 'DELETE' }); load();
   }
 
   const columns: Column<Team>[] = [
@@ -44,15 +46,14 @@ export default function Teams() {
       <span style={{ whiteSpace: 'nowrap' }}>
         <Link className="btn btn-sm" href={'/admin/teams/' + t.id}>Chi tiết</Link>{' '}
         <button className="btn btn-sm" onClick={() => openEdit(t)}>Sửa</button>{' '}
-        <button className="btn btn-sm btn-danger" onClick={() => del(t.id)}>Xoá</button>
+        <button className="btn btn-sm btn-danger" onClick={() => del(t)}>Xoá</button>
       </span>
     ) },
   ];
 
   return (
     <>
-      <div className="page-head"><div><div className="eyebrow">Admin CMS</div><div className="page-title">Quản lý đội thi</div>
-        <div className="page-desc">Tạo đội, quản lý thành viên. Bấm "Chi tiết" để xem/sửa thành viên.</div></div></div>
+      <p className="page-desc" style={{ marginBottom: 16 }}>Tạo đội, quản lý thành viên. Bấm "Chi tiết" để xem/sửa thành viên.</p>
 
       <DataTable
         columns={columns} rows={teams} getId={(t) => t.id}

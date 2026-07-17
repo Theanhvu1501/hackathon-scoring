@@ -8,8 +8,10 @@ export default function Results() {
     es.addEventListener('reveal',load); es.addEventListener('update',load); return ()=>es.close(); },[]);
   if(!data) return <div>Đang tải…</div>;
   return (<>
-    <div className="page-head"><div><div className="eyebrow" style={{color:'var(--cyan)'}}>Ban giám khảo</div><div className="page-title">Kết quả các đội</div>
-      <div className="page-desc">{data.state==='final'?'Đã công bố chung cuộc.':'Điểm tạm (chưa có Trưởng BGK).'}</div></div></div>
+    <div className="page-head">
+      <p className="page-desc">{data.state==='final'?'Đã công bố chung cuộc — điểm trung bình gồm cả Trưởng BGK.':'Điểm tạm (chưa có Trưởng BGK).'}</p>
+      <span className={'pill '+(data.state==='final'?'live':'pending')}>{data.state==='final'?'Đã công bố':'Điểm tạm'}</span>
+    </div>
     <div className="card"><table>
       <thead><tr><th>#</th><th>Đội</th><th style={{textAlign:'right'}}>Điểm TB</th></tr></thead>
       <tbody>{data.rows.map((r:any)=>(<tr key={r.team.id}>
