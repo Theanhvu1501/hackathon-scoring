@@ -8,3 +8,5 @@ export async function POST(req: Request) {
   if (!body?.name || typeof body?.maxScore !== 'number') return NextResponse.json({ error:'name and maxScore required' }, { status:400 });
   return NextResponse.json(await createCriterion(body), { status:201 });
 }
+
+export const dynamic = 'force-dynamic';

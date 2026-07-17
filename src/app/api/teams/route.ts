@@ -11,3 +11,5 @@ export async function POST(req: Request) {
   if (!body?.name || !body?.code) return NextResponse.json({ error:'name and code required' }, { status:400 });
   return NextResponse.json(await createTeam(body), { status:201 });
 }
+
+export const dynamic = 'force-dynamic';

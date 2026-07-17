@@ -11,3 +11,5 @@ export async function POST(req: Request) {
   if (!body?.name) return NextResponse.json({ error:'name required' }, { status:400 });
   return NextResponse.json(await createJudge(body), { status:201 });
 }
+
+export const dynamic = 'force-dynamic';

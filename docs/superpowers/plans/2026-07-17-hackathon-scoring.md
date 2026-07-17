@@ -21,6 +21,10 @@
 - **Design:** light theme, tokens copied verbatim from `mockups/index.html` (`--page-bg:#f3f7ff`, text `#0a1f48`, orange `#f37021→#ff9730`, blue `#2563eb`, cyan `#0a97c4`). CMS full-width; public board full-bleed.
 - **Money/score values:** scores allow one decimal (e.g. 7.5). Store as `Float`.
 - **Commits:** conventional commits, one per task minimum.
+- **Dynamic API routes:** every API GET handler that reads the DB must
+  `export const dynamic = 'force-dynamic'` (results, reveal, teams, criteria,
+  judges) so `next build` does not attempt to statically prerender them at
+  build time — the Docker image builds without a live database.
 
 ## File Structure
 
@@ -442,9 +446,9 @@ const scores: ScoreLite[] = [
   s('j3','t1','c1',23), s('j3','t1','c2',23),
   s('j4','t1','c1',24), s('j4','t1','c2',22),
   s('jH','t1','c1',25), s('jH','t1','c2',25),
-  // t2: j1..j4 avg total ~47.5, jH gives 40 (drops it)
+  // t2: j1..j4 totals 48,48,47,47 -> avg 47.5; jH gives 40 (drops it), final avg 46.0
   s('j1','t2','c1',24), s('j1','t2','c2',24),
-  s('j2','t2','c1',23), s('j2','t2','c2',24),
+  s('j2','t2','c1',24), s('j2','t2','c2',24),
   s('j3','t2','c1',24), s('j3','t2','c2',23),
   s('j4','t2','c1',24), s('j4','t2','c2',23),
   s('jH','t2','c1',20), s('jH','t2','c2',20),
@@ -724,15 +728,19 @@ Expected: PASS.
 cat > src/middleware.ts <<'EOF'
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifySession, SESSION_COOKIE } from '@/lib/auth';
 
-// Board and login are public. /admin requires a session; role is enforced in pages/handlers.
+// Runs in the Edge runtime, so it must NOT import node:crypto (via @/lib/auth).
+// This is a fast presence check only; the real HMAC verification + role gate
+// happens in the /admin and /judge server layouts via getCurrentUser (Node runtime).
+const SESSION_COOKIE = 'hs_session';
+
+// Board and login are public. /admin and /judge require a session cookie to be present.
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isProtected = pathname.startsWith('/admin') || pathname.startsWith('/judge');
   if (!isProtected) return NextResponse.next();
-  const userId = verifySession(req.cookies.get(SESSION_COOKIE)?.value);
-  if (!userId) {
+  const token = req.cookies.get(SESSION_COOKIE)?.value;
+  if (!token) {
     const url = req.nextUrl.clone(); url.pathname = '/login';
     return NextResponse.redirect(url);
   }
@@ -1407,15 +1415,16 @@ git commit -m "feat: scores service, judge scoring API, login/logout"
 ```bash
 cat > tests/reveal-flow.test.ts <<'EOF'
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
-import { disconnect, prisma } from './helpers/db';
+import { execSync } from 'node:child_process';
+import { disconnect } from './helpers/db';
 import { setRevealState, getRevealState, getResults } from '@/lib/services/reveal';
 
 afterAll(disconnect);
-beforeAll(async () => {
-  // ensure seed-like data exists: rely on `npm run seed` having run, else skip guard
-  const teams = await prisma.team.count();
-  if (teams === 0) throw new Error('Run `npx tsx prisma/seed.ts` before this test');
-});
+// Re-seed to a known state so this test is deterministic regardless of what
+// other integration tests did to shared DB state (e.g. head-judge flag).
+beforeAll(() => {
+  execSync('npx tsx prisma/seed.ts', { stdio: 'ignore' });
+}, 120000);
 
 describe('reveal flow', () => {
   it('provisional excludes head, final includes head, ranking changes', async () => {
@@ -1527,17 +1536,22 @@ import { subscribe } from '@/lib/events';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   const encoder = new TextEncoder();
+  let cleanup = () => {};
   const stream = new ReadableStream({
     start(controller) {
-      controller.enqueue(encoder.encode(`event: hello\ndata: {}\n\n`));
-      const unsub = subscribe(({ event, data }) => {
-        controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
-      });
-      const ping = setInterval(() => controller.enqueue(encoder.encode(`event: ping\ndata: {}\n\n`)), 15000);
-      // @ts-expect-error attach for GC on cancel
-      controller._cleanup = () => { clearInterval(ping); unsub(); };
+      const send = (event: string, data: unknown) => {
+        try {
+          controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+        } catch {
+          cleanup(); // controller already closed (client gone) — tear down
+        }
+      };
+      send('hello', {});
+      const unsub = subscribe(({ event, data }) => send(event, data));
+      const ping = setInterval(() => send('ping', {}), 15000);
+      cleanup = () => { clearInterval(ping); unsub(); };
     },
-    cancel() { /* controller._cleanup handled by GC of closure via unsub timer */ },
+    cancel() { cleanup(); },
   });
   return new Response(stream, {
     headers: { 'Content-Type':'text/event-stream', 'Cache-Control':'no-cache, no-transform', Connection:'keep-alive' },

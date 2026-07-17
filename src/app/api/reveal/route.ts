@@ -9,3 +9,5 @@ export async function POST(req: Request) {
   await setRevealState(state, u.id);
   return NextResponse.json({ ok:true, state });
 }
+
+export const dynamic = 'force-dynamic';
