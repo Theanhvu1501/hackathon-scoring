@@ -11,6 +11,7 @@ export async function createJudge(data:{ name:string; isHead?:boolean }) {
   return prisma.user.create({ data:{ name:data.name, role:'judge', isHead:!!data.isHead, accessCode: await uniqueCode() } });
 }
 export async function regenerateCode(id:string) { return prisma.user.update({ where:{ id }, data:{ accessCode: await uniqueCode() } }); }
+export function updateJudge(id:string, data:{ name?:string }) { return prisma.user.update({ where:{ id }, data }); }
 export async function setHead(id:string) {
   await prisma.user.updateMany({ where:{ role:'judge', isHead:true }, data:{ isHead:false } });
   await prisma.user.update({ where:{ id }, data:{ isHead:true } });

@@ -5,5 +5,5 @@ export default async function AdminLayout({ children }:{ children:React.ReactNod
   const u = await getCurrentUser();
   if (!u) redirect('/login');
   if (u.role !== 'admin') redirect('/judge');
-  return <Shell role="admin">{children}</Shell>;
+  return <Shell role="admin" userName={u.name}>{children}</Shell>;
 }

@@ -5,5 +5,5 @@ export default async function JudgeLayout({ children }:{ children:React.ReactNod
   const u = await getCurrentUser();
   if (!u) redirect('/login');
   if (u.role !== 'judge') redirect('/admin');
-  return <Shell role="judge">{children}</Shell>;
+  return <Shell role="judge" userName={u.name}>{children}</Shell>;
 }
