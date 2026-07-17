@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import { generateAccessCode } from '../src/lib/access-code';
 const prisma = new PrismaClient();
+
+// Fixed, human-readable access codes so they stay stable across every deploy/reseed.
+// Admin code can be overridden with the ADMIN_ACCESS_CODE env var.
+const ADMIN_CODE = process.env.ADMIN_ACCESS_CODE || 'ADMIN-2026';
 
 const TEAMS = [
   { code:'EV', name:'EV Nexus',     tag:'Quản lý pin & định tuyến sạc' },
@@ -20,11 +23,11 @@ const CRITERIA = [
   { name:'Thuyết trình', description:'Trình bày mạch lạc, thuyết phục', maxScore:10, order:4 },
 ];
 const JUDGES = [
-  { name:'Nguyễn Văn Minh', isHead:true },
-  { name:'Trần Thị Lan', isHead:false },
-  { name:'Lê Hoàng Sơn', isHead:false },
-  { name:'Phạm Thu Hà', isHead:false },
-  { name:'Đỗ Minh Phúc', isHead:false },
+  { name:'Nguyễn Văn Minh', isHead:true,  code:'HEAD-2026' },
+  { name:'Trần Thị Lan',    isHead:false, code:'BGK2-2026' },
+  { name:'Lê Hoàng Sơn',    isHead:false, code:'BGK3-2026' },
+  { name:'Phạm Thu Hà',     isHead:false, code:'BGK4-2026' },
+  { name:'Đỗ Minh Phúc',    isHead:false, code:'BGK5-2026' },
 ];
 
 async function main() {
@@ -35,9 +38,9 @@ async function main() {
   await prisma.user.deleteMany();
   await prisma.settings.upsert({ where:{ id:1 }, update:{ revealState:'drafting' }, create:{ id:1, revealState:'drafting' } });
 
-  const admin = await prisma.user.create({ data:{ name:'Ban tổ chức', role:'admin', accessCode: generateAccessCode() } });
+  const admin = await prisma.user.create({ data:{ name:'Ban tổ chức', role:'admin', accessCode: ADMIN_CODE } });
   const judges = [];
-  for (const j of JUDGES) judges.push(await prisma.user.create({ data:{ name:j.name, role:'judge', isHead:j.isHead, accessCode: generateAccessCode() } }));
+  for (const j of JUDGES) judges.push(await prisma.user.create({ data:{ name:j.name, role:'judge', isHead:j.isHead, accessCode: j.code } }));
 
   const criteria = [];
   for (const c of CRITERIA) criteria.push(await prisma.criterion.create({ data:c }));

@@ -19,6 +19,7 @@ services:
     environment:
       DATABASE_URL: "postgresql://hs:hs@db:5432/hackathon?schema=public"
       SESSION_SECRET: "change-me-in-prod-please-32-chars-min"
+      ADMIN_ACCESS_CODE: "ADMIN-2026"
       NODE_ENV: production
     ports: ["3000:3000"]
     command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
