@@ -37,21 +37,6 @@ function buildCrumbs(path: string, role: 'admin' | 'judge'): Crumb[] {
   return items;
 }
 
-function pageTitle(path: string): { ic: string; t: string } {
-  if (path.startsWith('/admin/teams/')) return { ic: '◈', t: 'Chi tiết đội' };
-  if (path.startsWith('/judge/score/')) return { ic: '✎', t: 'Chấm điểm' };
-  const map: Record<string, { ic: string; t: string }> = {
-    '/admin': { ic: '▦', t: 'Tổng quan & tiến độ' },
-    '/admin/teams': { ic: '◈', t: 'Quản lý đội thi' },
-    '/admin/judges': { ic: '◐', t: 'Tài khoản ban giám khảo' },
-    '/admin/barem': { ic: '＃', t: 'Cấu hình barem' },
-    '/admin/publish': { ic: '◉', t: 'Điều khiển công bố' },
-    '/judge': { ic: '◈', t: 'Danh sách đội thi' },
-    '/judge/results': { ic: '≡', t: 'Kết quả chấm điểm' },
-  };
-  return map[path] || { ic: '▦', t: 'Automotive Hackathon 2026' };
-}
-
 export default function Shell({
   role, userName = '', children,
 }: {
@@ -63,7 +48,8 @@ export default function Shell({
   const router = useRouter();
   const nav = role === 'admin' ? ADMIN_NAV : JUDGE_NAV;
   const crumbs = buildCrumbs(path, role);
-  const title = pageTitle(path);
+  const home = role === 'admin' ? '/admin' : '/judge';
+  const rest = crumbs.slice(1);
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -104,12 +90,7 @@ export default function Shell({
 
       <div className="main">
         <div className="topbar">
-          <div className="topbar-title">
-            <span className="tt-ic">{title.ic}</span>
-            <h1>{title.t}</h1>
-          </div>
-
-          <div className="top-actions">
+          <div className="top-actions" style={{ marginLeft: 'auto' }}>
             <div className="usermenu" ref={menuRef}>
               <button className="usermenu-btn" onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>
                 <span className="avatar">{initials}</span>
@@ -133,12 +114,17 @@ export default function Shell({
 
         <div className="subbar">
           <nav className="breadcrumb" aria-label="Breadcrumb">
-            {crumbs.map((c, i) => {
-              const last = i === crumbs.length - 1;
+            <Link href={home} className="crumb-home" aria-label="Trang chủ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 11l9-8 9 8" /><path d="M5 9.5V21h14V9.5" />
+              </svg>
+            </Link>
+            {rest.map((c, i) => {
+              const last = i === rest.length - 1;
               return (
                 <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span className="sep">›</span>
                   {c.href && !last ? <Link href={c.href}>{c.label}</Link> : <span className={last ? 'cur' : undefined}>{c.label}</span>}
-                  {!last && <span className="sep">›</span>}
                 </span>
               );
             })}
