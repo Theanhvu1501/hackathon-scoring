@@ -38,8 +38,7 @@ export default function Barem() {
 
   return (
     <>
-      <div className="page-head">
-        <p className="page-desc">Danh sách tiêu chí và điểm tối đa. Tổng điểm tự cộng — không cố định con số.</p>
+      <div className="page-head" style={{ justifyContent: 'flex-end' }}>
         <button className="btn btn-primary" onClick={openAdd}>＋ Thêm tiêu chí</button>
       </div>
 

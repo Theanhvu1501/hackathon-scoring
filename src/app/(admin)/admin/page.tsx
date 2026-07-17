@@ -10,7 +10,6 @@ export default async function Dashboard() {
   const done = new Set(progress.filter(p=>p.submitted).map(p=>p.judgeId+':'+p.teamId));
   return (
     <>
-      <p className="page-desc" style={{ marginBottom: 16 }}>Theo dõi giám khảo đã chấm những đội nào (✓) trước khi công bố. Cột có ♛ là Trưởng BGK.</p>
       <div className="card"><div className="matrix"><table>
         <thead><tr><th>Đội</th>{judges.map(j=><th key={j.id} style={{textAlign:'center'}}>{j.name.split(' ').pop()}{j.isHead?' ♛':''}</th>)}</tr></thead>
         <tbody>

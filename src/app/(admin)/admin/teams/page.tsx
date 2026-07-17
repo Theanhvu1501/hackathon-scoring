@@ -53,8 +53,6 @@ export default function Teams() {
 
   return (
     <>
-      <p className="page-desc" style={{ marginBottom: 16 }}>Tạo đội, quản lý thành viên. Bấm "Chi tiết" để xem/sửa thành viên.</p>
-
       <DataTable
         columns={columns} rows={teams} getId={(t) => t.id}
         searchPlaceholder="Tìm theo tên hoặc mã đội…"

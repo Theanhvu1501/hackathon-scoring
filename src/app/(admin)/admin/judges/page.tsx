@@ -55,8 +55,6 @@ export default function Judges() {
 
   return (
     <>
-      <p className="page-desc" style={{ marginBottom: 16 }}>Mỗi giám khảo có một mã truy cập cố định. Đúng một Trưởng BGK (lá bài quyết định).</p>
-
       <DataTable
         columns={columns} rows={shown} getId={(j) => j.id}
         searchPlaceholder="Tìm theo tên hoặc mã…"

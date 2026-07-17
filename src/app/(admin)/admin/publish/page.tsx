@@ -9,7 +9,6 @@ export default function Publish() {
   async function set(s:string){ await fetcher('/api/reveal',{method:'POST',body:JSON.stringify({state:s})}); setState(s); }
   const idx=STEPS.findIndex(s=>s.k===state);
   return (<>
-    <p className="page-desc" style={{marginBottom:16}}>Ba bước công bố: mở điểm tạm (realtime) → lộ điểm Trưởng BGK → chốt chung cuộc.</p>
     <div className="stepper">{STEPS.map((s,i)=>(<div key={s.k} className={'step '+(i===idx?'active':'')+(i<idx?' done':'')}>
       <div className="step-n">{i<idx?'✓':s.n}</div><h4>{s.t}</h4></div>))}</div>
     <div className="card card-pad" style={{marginTop:20}}>

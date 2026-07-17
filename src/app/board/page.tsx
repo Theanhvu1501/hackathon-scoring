@@ -14,7 +14,7 @@ export default function Board() {
     es.addEventListener('reveal',load); es.addEventListener('update',load);
     return ()=>es.close();
   },[]);
-  if(!data) return <div className="public-stage"/>;
+  if(!data) return <div className="public-stage"><LoginLink /></div>;
   if(data.state==='drafting') return (
     <div className="wait-stage"><div className="wait-inner">
       <div className="wait-badge">A</div>

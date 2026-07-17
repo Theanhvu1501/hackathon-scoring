@@ -8,8 +8,7 @@ export default function Results() {
     es.addEventListener('reveal',load); es.addEventListener('update',load); return ()=>es.close(); },[]);
   if(!data) return <div>Đang tải…</div>;
   return (<>
-    <div className="page-head">
-      <p className="page-desc">{data.state==='final'?'Đã công bố chung cuộc — điểm trung bình gồm cả Trưởng BGK.':'Điểm tạm (chưa có Trưởng BGK).'}</p>
+    <div className="page-head" style={{ justifyContent: 'flex-end' }}>
       <span className={'pill '+(data.state==='final'?'live':'pending')}>{data.state==='final'?'Đã công bố':'Điểm tạm'}</span>
     </div>
     <div className="card"><table>

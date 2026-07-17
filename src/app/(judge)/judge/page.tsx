@@ -26,8 +26,7 @@ export default function JudgeTeams() {
 
   return (
     <>
-      <div className="page-head">
-        <p className="page-desc">Chọn đội để chấm điểm. Đội đã nộp điểm được đánh dấu <b style={{ color: 'var(--green)' }}>✓ Đã chấm</b>. Bạn chỉ thấy điểm của mình cho tới khi công bố.</p>
+      <div className="page-head" style={{ justifyContent: 'flex-end' }}>
         <div className="seg">
           <button className={filter === 'all' ? 'on' : ''} onClick={() => setFilter('all')}>Tất cả ({teams.length})</button>
           <button className={filter === 'done' ? 'on' : ''} onClick={() => setFilter('done')}>Đã chấm ({doneCount})</button>
