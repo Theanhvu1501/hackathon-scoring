@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import { prisma, disconnect } from './helpers/db';
-import { upsertScores, getJudgeScores } from '@/lib/services/scores';
+import { upsertScores, getJudgeScores, judgeProgress } from '@/lib/services/scores';
 afterAll(disconnect);
 
 let judgeId:string, teamId:string, critIds:string[]=[];
@@ -23,5 +23,14 @@ describe('scores service', () => {
     expect(rows.length).toBe(2); // still 2, updated
     expect(rows.find(r=>r.criterionId===critIds[0])!.value).toBe(10);
     expect(rows[0].submitted).toBe(true);
+  });
+
+  it('judgeProgress returns submitted (judge,team) pairs without a max(boolean) error', async () => {
+    // depends on the submitted upsert above
+    const progress = await judgeProgress();
+    expect(Array.isArray(progress)).toBe(true);
+    const mine = progress.find(p => p.judgeId === judgeId && p.teamId === teamId);
+    expect(mine).toBeTruthy();
+    expect(mine!.submitted).toBe(true);
   });
 });

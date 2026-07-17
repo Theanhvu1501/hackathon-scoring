@@ -29,7 +29,13 @@ export async function upsertScores(
     })
   ));
 }
+// Returns the (judge, team) pairs a judge has SUBMITTED. Uses distinct instead of
+// groupBy(_max: boolean) because Postgres has no max(boolean) aggregate.
 export async function judgeProgress() {
-  const rows = await prisma.score.groupBy({ by:['judgeId','teamId'], _max:{ submitted:true } });
-  return rows.map(r => ({ judgeId:r.judgeId, teamId:r.teamId, submitted: !!r._max.submitted }));
+  const rows = await prisma.score.findMany({
+    where: { submitted: true },
+    select: { judgeId: true, teamId: true },
+    distinct: ['judgeId', 'teamId'],
+  });
+  return rows.map(r => ({ judgeId: r.judgeId, teamId: r.teamId, submitted: true }));
 }
