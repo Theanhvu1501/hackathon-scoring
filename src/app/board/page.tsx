@@ -33,7 +33,7 @@ export default function Board() {
           <div><b>ĐIỂM TẠM — chưa có điểm Trưởng Ban giám khảo</b><p>Bảng cập nhật realtime theo từng giám khảo.</p></div>
           <span className="prov-tag">4/5 GIÁM KHẢO</span></div>
       )}
-      {phase==='final' && <Podium rows={data.rows} />}
+      {phase==='final' && <Podium rows={data.rows} baremTotal={data.baremTotal} />}
       <Leaderboard rows={data.rows} phase={phase} baremTotal={data.baremTotal} />
     </div>
   );
