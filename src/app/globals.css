@@ -397,3 +397,41 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 /* image picker preview */
 .img-preview{border:1px solid var(--line-strong);background:var(--navy-950);display:grid;place-items:center;overflow:hidden;color:var(--muted-2);font-size:22px;flex:0 0 auto}
 .img-preview img{width:100%;height:100%;object-fit:cover}
+
+/* ============ Lively public board ============ */
+.board-live{position:relative}
+.board-live > *{position:relative;z-index:1}
+.board-live::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(600px 420px at 18% 22%, rgba(243,112,33,.14), transparent 62%),
+    radial-gradient(600px 420px at 82% 28%, rgba(0,153,204,.14), transparent 62%),
+    radial-gradient(760px 520px at 50% 96%, rgba(37,99,235,.12), transparent 62%);
+  animation:aurora 15s ease-in-out infinite alternate}
+@keyframes aurora{0%{transform:translate3d(-2%,-1%,0) scale(1.03)}100%{transform:translate3d(2%,2%,0) scale(1.07)}}
+
+.pub-title span{background-size:200% auto;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:200% center}}
+
+.pod-champion{animation:champ 2.4s ease-in-out infinite}
+@keyframes champ{0%,100%{box-shadow:0 -6px 50px -18px rgba(255,150,40,.6)}50%{box-shadow:0 -6px 74px -8px rgba(255,150,40,.95)}}
+.pod-crown{animation:crownfloat 2.6s ease-in-out infinite}
+@keyframes crownfloat{50%{transform:translateY(-6px) rotate(-3deg)}}
+
+.row.leader{position:relative;overflow:hidden}
+.row.leader::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(105deg,transparent 32%,rgba(255,255,255,.5) 50%,transparent 68%);
+  transform:translateX(-120%);animation:sheen 3.6s ease-in-out infinite}
+@keyframes sheen{0%,55%{transform:translateX(-120%)}100%{transform:translateX(120%)}}
+
+/* podium member photos */
+.pod-members{display:flex;justify-content:center;margin-top:12px;padding-left:8px}
+.pod-mem{width:30px;height:30px;border-radius:50%;margin-left:-8px;overflow:hidden;border:2px solid var(--navy-850);
+  background:var(--blue);display:grid;place-items:center;box-shadow:0 3px 8px -3px rgba(23,54,120,.5)}
+.pod-1 .pod-mem{width:34px;height:34px}
+.pod-mem img{width:100%;height:100%;object-fit:cover}
+.pod-mem-i{color:#fff;font-size:12px;font-weight:700;font-family:"Space Grotesk"}
+.pod-mem-more{background:var(--navy-800);color:var(--muted);font-size:11px;font-weight:700}
+
+@media (prefers-reduced-motion: reduce){
+  .board-live::before,.pub-title span,.pod-champion,.pod-crown,.row.leader::after{animation:none}
+}
