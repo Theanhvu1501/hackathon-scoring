@@ -1,8 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import Podium from '@/components/Podium';
 import Leaderboard from '@/components/Leaderboard';
+
+const LoginLink = () => <Link href="/login" className="board-login">Ban tổ chức · Đăng nhập ↗</Link>;
 export default function Board() {
   const [data,setData]=useState<any>(null);
   async function load(){ setData(await fetcher('/api/results')); }
@@ -19,7 +22,7 @@ export default function Board() {
       <h1 className="wait-title">Kết quả sắp được <span>công bố</span></h1>
       <p className="wait-desc">Ban giám khảo đang hoàn tất chấm điểm.</p>
       <div className="dots-live"><i></i> ĐANG CHỜ TÍN HIỆU CÔNG BỐ</div>
-    </div></div>
+    </div><LoginLink /></div>
   );
   const phase = data.state;
   return (
@@ -35,6 +38,7 @@ export default function Board() {
       )}
       {phase==='final' && <Podium rows={data.rows} baremTotal={data.baremTotal} />}
       <Leaderboard rows={data.rows} phase={phase} baremTotal={data.baremTotal} />
+      <LoginLink />
     </div>
   );
 }
