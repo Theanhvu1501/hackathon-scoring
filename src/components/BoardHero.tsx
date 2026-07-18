@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 
 // Animated "AI neural constellation" + racing car silhouette hero panel,
 // styled in the FPT Automotive Hackathon palette (navy / orange / cyan).
-export default function BoardHero({ phase }: { phase: string }) {
+export default function BoardHero({ phase, imageUrl }: { phase: string; imageUrl?: string | null }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -57,7 +57,9 @@ export default function BoardHero({ phase }: { phase: string }) {
   }, []);
 
   return (
-    <div className="board-hero">
+    <div className={'board-hero' + (imageUrl ? ' has-photo' : '')}>
+      {imageUrl && <div className="hero-photo" style={{ backgroundImage: `url(${imageUrl})` }} aria-hidden />}
+      {imageUrl && <div className="hero-photo-overlay" aria-hidden />}
       <canvas ref={canvasRef} className="hero-canvas" aria-hidden />
       <div className="hero-grid" aria-hidden />
       <div className="hero-live"><span className="pill live">{phase === 'final' ? '● CHUNG CUỘC' : '● TRỰC TIẾP'}</span></div>

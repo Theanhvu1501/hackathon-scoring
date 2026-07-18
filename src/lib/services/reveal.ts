@@ -8,6 +8,11 @@ async function settings() {
   return prisma.settings.upsert({ where:{ id:1 }, update:{}, create:{ id:1, revealState:'drafting' } });
 }
 export async function getRevealState(): Promise<State> { return (await settings()).revealState as State; }
+export async function getHeroImage(): Promise<string | null> { return (await settings()).heroImageUrl ?? null; }
+export async function setHeroImage(url: string | null) {
+  await prisma.settings.upsert({ where:{ id:1 }, update:{ heroImageUrl: url }, create:{ id:1, heroImageUrl: url } });
+  broadcast('reveal', { hero: true });
+}
 export async function setRevealState(state: State, actorId?: string) {
   await prisma.settings.upsert({ where:{ id:1 }, update:{ revealState: state }, create:{ id:1, revealState: state } });
   await prisma.auditLog.create({ data:{ actorId, action:'reveal:'+state } });
@@ -31,5 +36,6 @@ export async function getResults() {
   const membersByTeam = Object.fromEntries(teams.map(t => [t.id, t.members]));
   const enriched = rows.map(r => ({ ...r, team: { ...r.team, members: membersByTeam[r.team.id] ?? [] } }));
   const baremTotal = Math.round(criteria.reduce((a,c)=>a+c.maxScore,0)*10)/10;
-  return { state, rows: enriched, baremTotal };
+  const settingsRow = await settings();
+  return { state, rows: enriched, baremTotal, heroImageUrl: settingsRow.heroImageUrl ?? null };
 }

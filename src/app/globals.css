@@ -492,34 +492,37 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 .hero-car{position:absolute;left:-3%;right:-3%;bottom:22px;width:106%;z-index:1;opacity:.94;filter:drop-shadow(0 12px 30px rgba(243,112,33,.28));animation:carfloat 5s ease-in-out infinite}
 @keyframes carfloat{50%{transform:translateY(-7px)}}
 
-/* --- Right: racing standings --- */
-.board-standings{position:relative;background:linear-gradient(180deg,#ffffff,#eef3fd);padding:30px 30px 40px;min-height:100vh;overflow-y:auto}
-.standings-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px}
-.standings-head h2{font-family:"Space Grotesk";font-size:22px;font-weight:600}
-.rlist{display:flex;flex-direction:column;gap:11px}
-.rrow{display:grid;grid-template-columns:52px 1fr;gap:14px;align-items:center;background:#fff;border:1px solid var(--line);
-  border-radius:14px;padding:12px 16px;box-shadow:0 10px 22px -18px rgba(23,54,120,.5)}
-.rrow .pos{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:20px;color:#fff;background:var(--blue)}
-.rrow.rank-1 .pos{background:linear-gradient(135deg,#f7b733,#d99400)}
-.rrow.rank-2 .pos{background:linear-gradient(135deg,#b8c6d9,#8496b0)}
-.rrow.rank-3 .pos{background:linear-gradient(135deg,#e6a06a,#c17d3f)}
-.rrow.rank-n .pos{background:linear-gradient(135deg,#3b6fe0,#2450c8)}
-.rrow.is-leader{border-color:rgba(243,112,33,.55);box-shadow:0 16px 36px -18px rgba(243,112,33,.5)}
-.rbody{display:flex;flex-direction:column;gap:8px;min-width:0}
-.rhead{display:flex;align-items:center;gap:12px;min-width:0}
-.rhead .r-logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;font-size:16px;color:#fff;flex:0 0 auto}
-.rname{font-family:"Space Grotesk";font-size:19px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rtag{font-size:12px;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rscore{margin-left:auto;font-family:"Space Grotesk";font-weight:700;font-size:24px;color:var(--text);white-space:nowrap}
-.rscore small{font-size:12px;color:var(--muted-2);font-weight:500}
-.is-leader .rscore{color:var(--orange-dk)}
-.rtrack{height:9px;border-radius:6px;background:rgba(23,54,120,.09);overflow:hidden}
-.rtrack-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#2563eb,#00d4ff);transition:width .8s cubic-bezier(.22,1,.36,1)}
-.rank-1 .rtrack-fill{background:linear-gradient(90deg,#f37021,#ff9730)}
-.rank-2 .rtrack-fill{background:linear-gradient(90deg,#8496b0,#b8c6d9)}
-.rank-3 .rtrack-fill{background:linear-gradient(90deg,#c17d3f,#e6a06a)}
+/* --- Right: results standings (rank · photo · name · score) --- */
+.board-standings{position:relative;color:#fff;padding:34px 34px 46px;min-height:100vh;overflow-y:auto;
+  background:linear-gradient(165deg,#0e2a63 0%,#0a1f48 62%,#061838 100%)}
+.standings-head{margin-bottom:20px}
+.standings-head .st-kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#7fb2ff;font-weight:600;margin-bottom:6px}
+.standings-head h2{font-family:"Space Grotesk";font-size:clamp(24px,2.6vw,40px);font-weight:700;text-transform:uppercase;letter-spacing:.005em;color:#fff;line-height:1.02}
+.standings-head .st-underline{height:5px;width:190px;margin-top:12px;border-radius:4px;
+  background:linear-gradient(90deg,#ffb733,#f37021);box-shadow:0 5px 16px -4px rgba(243,112,33,.6)}
+.standings-head .pill.live{margin-top:14px;background:rgba(0,212,255,.14);color:#38d0f4;border-color:rgba(0,212,255,.4)}
+
+.glist{display:flex;flex-direction:column}
+.grow{display:grid;grid-template-columns:66px 56px 1fr auto;gap:16px;align-items:center;
+  padding:13px 8px;border-bottom:1px solid rgba(255,255,255,.1)}
+.grow:last-child{border-bottom:none}
+.grank{font-family:"Space Grotesk";font-weight:700;font-size:26px;color:#fff}
+.grank span{color:rgba(255,255,255,.4);font-weight:600}
+.gava{width:52px;height:52px;border-radius:50%;overflow:hidden;border:2px solid #ffb733;background:#0b2050;
+  display:grid;place-items:center;flex:0 0 auto;box-shadow:0 4px 12px -4px rgba(0,0,0,.5)}
+.gava img{width:100%;height:100%;object-fit:cover}
+.gava-code{font-family:"Space Grotesk";font-weight:700;font-size:17px;color:#fff}
+.gname{min-width:0}
+.gname .gn{display:block;font-family:"Space Grotesk";font-weight:600;font-size:22px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gname .gt{display:block;font-size:12.5px;color:#9fb6dd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gscore{font-family:"Space Grotesk";font-weight:700;font-size:26px;color:#ffd15c;white-space:nowrap;text-align:right}
+.gscore .gof{font-size:13px;color:#9fb6dd;font-weight:500}
+.grow.is-leader{background:linear-gradient(90deg,rgba(255,151,48,.14),transparent);border-radius:12px}
+.grow.is-leader .grank,.grow.is-leader .gscore{color:#ff9730}
+.grow.is-leader .gava{border-color:#ff9730;box-shadow:0 0 0 3px rgba(255,151,48,.28)}
+
 .board-standings .board-login{position:absolute}
-.board-standings .podium{margin-bottom:22px}
+.board-standings .podium{margin-bottom:24px}
 
 @media(max-width:960px){
   .board-split{grid-template-columns:1fr;min-height:0}
@@ -527,11 +530,21 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
   .hero-content{max-width:none}
   .hero-car{position:relative;left:0;right:0;width:100%;bottom:auto;margin-top:20px}
   .hero-live{position:static;margin-bottom:14px}
-  .board-standings{min-height:auto;padding:20px 16px 34px}
-  .rname{font-size:17px}.rscore{font-size:20px}
+  .board-standings{min-height:auto;padding:22px 18px 34px}
+  .grow{grid-template-columns:48px 46px 1fr auto;gap:12px;padding:11px 4px}
+  .grank{font-size:22px}.gname .gn{font-size:18px}.gscore{font-size:22px}
+  .gava{width:44px;height:44px}
 }
 @media(max-width:520px){
-  .rrow{grid-template-columns:44px 1fr;gap:10px;padding:10px 12px}
-  .rrow .pos{width:40px;height:40px;font-size:17px}
-  .rtag{display:none}
+  .grow{grid-template-columns:38px 40px 1fr auto;gap:8px}
+  .gname .gt{display:none}.gscore .gof{display:none}
 }
+
+/* hero with uploaded photo */
+.hero-photo{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center top;background-repeat:no-repeat}
+.hero-photo-overlay{position:absolute;inset:0;z-index:1;
+  background:linear-gradient(160deg,rgba(7,27,64,.4) 0%,rgba(10,31,72,.62) 55%,rgba(4,18,46,.9) 100%)}
+.board-hero.has-photo{justify-content:flex-end}
+.board-hero.has-photo .hero-canvas{opacity:.45}
+.board-hero.has-photo .hero-car{display:none}
+.board-hero.has-photo .hero-content{margin-top:0}

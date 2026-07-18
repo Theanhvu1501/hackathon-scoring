@@ -77,9 +77,10 @@ model Score {
 }
 
 model Settings {
-  id          Int         @id @default(1)
-  revealState RevealState @default(drafting)
-  updatedAt   DateTime    @updatedAt
+  id           Int         @id @default(1)
+  revealState  RevealState @default(drafting)
+  heroImageUrl String?
+  updatedAt    DateTime    @updatedAt
 }
 
 model AuditLog {

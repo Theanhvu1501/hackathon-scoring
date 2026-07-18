@@ -28,29 +28,21 @@ export default function Leaderboard({ rows, phase, baremTotal }: { rows: any[]; 
     for (const node of nodes) posRef.current.set(node.dataset.row!, node.offsetTop);
   });
 
-  const maxShown = Math.max(1, baremTotal);
-
   return (
-    <div className="rlist" ref={containerRef}>
+    <div className="glist" ref={containerRef}>
       {rows.map((r) => {
-        const pct = r.score === null ? 0 : Math.max(0, Math.min(100, (r.score / maxShown) * 100));
         const leader = r.rank === 1 && phase === 'final';
         return (
-          <div data-row={r.team.id} key={r.team.id} className={'rrow rank-' + (r.rank <= 3 ? r.rank : 'n') + (leader ? ' is-leader' : '')}>
-            <div className="pos">{r.tie ? 'T' : ''}{r.rank}</div>
-            <div className="rbody">
-              <div className="rhead">
-                <span className="r-logo" style={{ background: r.team.logoUrl ? 'var(--navy-950)' : 'var(--orange)', padding: 0, overflow: 'hidden' }}>
-                  {r.team.logoUrl ? <img src={r.team.logoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : r.team.code}
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <div className="rname">{r.team.name}</div>
-                  <div className="rtag">{r.team.tag}</div>
-                </div>
-                <div className="rscore tnum">{r.score === null ? '—' : r.score.toFixed(1)}<small>/{baremTotal}</small></div>
-              </div>
-              <div className="rtrack"><div className="rtrack-fill" style={{ width: pct + '%' }} /></div>
+          <div data-row={r.team.id} key={r.team.id} className={'grow' + (leader ? ' is-leader' : '') + (r.rank <= 3 ? ' rank-' + r.rank : '')}>
+            <div className="grank">{r.tie ? 'T' : ''}{r.rank}<span>.</span></div>
+            <div className="gava">
+              {r.team.logoUrl ? <img src={r.team.logoUrl} alt="" /> : <span className="gava-code">{r.team.code}</span>}
             </div>
+            <div className="gname">
+              <span className="gn">{r.team.name}</span>
+              <span className="gt">{r.team.tag}</span>
+            </div>
+            <div className="gscore tnum">{r.score === null ? '—' : r.score.toFixed(1)}<span className="gof"> / {baremTotal}</span></div>
           </div>
         );
       })}

@@ -34,7 +34,7 @@ export default function Board() {
     return () => clearInterval(id);
   }, [data?.state]);
 
-  if (!data) return <div className="board-split"><BoardHero phase="live" /><div className="board-standings"><LoginLink /></div></div>;
+  if (!data) return <div className="board-split"><BoardHero phase="live" imageUrl={null} /><div className="board-standings"><LoginLink /></div></div>;
 
   if (data.state === 'drafting') return (
     <div className="wait-stage">
@@ -53,10 +53,12 @@ export default function Board() {
   return (
     <div className={'board-split' + (phase === 'final' ? ' board-final' : '')}>
       {phase === 'final' && <Confetti fire={celebrate} />}
-      <BoardHero phase={phase} />
+      <BoardHero phase={phase} imageUrl={data.heroImageUrl} />
       <div className="board-standings">
         <div className="standings-head">
-          <h2>Bảng xếp hạng {phase === 'final' ? 'chung cuộc' : 'trực tiếp'}</h2>
+          <div className="st-kicker">Automotive Hackathon 2026</div>
+          <h2>{phase === 'final' ? 'Kết quả chung cuộc' : 'Bảng xếp hạng trực tiếp'}</h2>
+          <div className="st-underline" />
           <span className="pill live">{phase === 'final' ? '● CHUNG CUỘC' : '● ĐIỂM TẠM · LIVE'}</span>
         </div>
         {phase === 'provisional' && (
