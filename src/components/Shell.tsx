@@ -51,6 +51,7 @@ export default function Shell({
   const home = role === 'admin' ? '/admin' : '/judge';
   const rest = crumbs.slice(1);
   const [open, setOpen] = useState(false);
+  const [drawer, setDrawer] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,6 +59,9 @@ export default function Shell({
     document.addEventListener('mousedown', onDoc);
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
+
+  // Close the mobile drawer whenever the route changes.
+  useEffect(() => { setDrawer(false); }, [path]);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -68,7 +72,8 @@ export default function Shell({
 
   return (
     <div className="app">
-      <aside className="sidebar">
+      <div className={cx('sidebar-backdrop', drawer && 'open')} onClick={() => setDrawer(false)} />
+      <aside className={cx('sidebar', drawer && 'open')}>
         <div className="brand">
           <div className="brand-logo">A</div>
           <div><div className="brand-name">Automotive Hackathon</div><div className="brand-sub">2026 · Chung kết</div></div>
@@ -79,7 +84,7 @@ export default function Shell({
             {nav.map((n) => {
               const active = (n.href === '/admin' || n.href === '/judge') ? path === n.href : path.startsWith(n.href);
               return (
-                <Link key={n.href} href={n.href} className={cx('nav-item', active && 'active')}>
+                <Link key={n.href} href={n.href} className={cx('nav-item', active && 'active')} onClick={() => setDrawer(false)}>
                   <span className="ni-ic">{n.ic}</span> {n.label}
                 </Link>
               );
@@ -90,6 +95,11 @@ export default function Shell({
 
       <div className="main">
         <div className="topbar">
+          <button className="hamburger icon-btn" aria-label="Mở menu" onClick={() => setDrawer(true)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
           <div className="top-actions" style={{ marginLeft: 'auto' }}>
             <div className="usermenu" ref={menuRef}>
               <button className="usermenu-btn" onClick={() => setOpen((o) => !o)} aria-haspopup="menu" aria-expanded={open}>

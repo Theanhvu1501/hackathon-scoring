@@ -315,13 +315,45 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 .seg button{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted)}
 .seg button.on{background:var(--orange);color:#fff}
 
-@media(max-width:900px){
+.topbar .hamburger{display:none}
+.sidebar-backdrop{display:none}
+
+@media(max-width:960px){
   .app{grid-template-columns:1fr}
-  .sidebar{position:static;height:auto}
+  /* Sidebar becomes an off-canvas drawer toggled by the hamburger */
+  .sidebar{position:fixed;top:0;left:0;width:min(84vw,290px);height:100vh;z-index:80;
+    transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 24px 70px -20px rgba(23,54,120,.55)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-backdrop{display:block;position:fixed;inset:0;background:rgba(10,31,72,.42);z-index:70;
+    opacity:0;visibility:hidden;transition:opacity .2s}
+  .sidebar-backdrop.open{opacity:1;visibility:visible}
+  .topbar .hamburger{display:grid}
+  .content{padding:16px}
+  .subbar{padding:12px 16px 0}
+  .topbar{padding:0 14px}
   .stat-row{grid-template-columns:1fr 1fr}
-  .two-col{grid-template-columns:1fr}
-  .row{grid-template-columns:70px 1fr 130px;gap:10px;padding:12px 14px}
-  .r-name{font-size:17px}.rk-num{font-size:28px;min-width:40px}.r-score .sc{font-size:26px}.r-logo{width:42px;height:42px}
+  .two-col{grid-template-columns:1fr !important}
+  .usermenu-btn .rl{display:none}
+  /* public board */
+  .public-stage{padding:24px 16px}
+  .pub-title{font-size:clamp(22px,7vw,34px)}
+  .row{grid-template-columns:60px 1fr 116px;gap:10px;padding:12px 14px}
+  .r-name{font-size:16px}.rk-num{font-size:26px;min-width:36px}.r-score .sc{font-size:24px}
+  .r-logo{width:40px;height:40px}.r-tag{display:none}
+  /* stack the podium vertically, champion on top, drop the pedestals */
+  .podium{display:flex;flex-direction:column;gap:12px;max-width:420px;margin:0 auto 26px}
+  .pod{width:100%;height:auto}
+  .pod-1{order:-1}
+  .pod-riser{display:none}
+}
+
+@media(max-width:520px){
+  .stat-row{grid-template-columns:1fr}
+  .usermenu-btn .nm{max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .page-head{gap:12px}
+  .modal-body{padding:16px}
+  .members{grid-template-columns:1fr}
+  .r-score .of{display:none}
 }
 
 /* ============ CMS enhancements (usermenu, breadcrumb, modal, table tools) ============ */
