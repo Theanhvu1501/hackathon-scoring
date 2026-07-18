@@ -5,6 +5,7 @@ import { fetcher } from '@/lib/ui';
 import Podium from '@/components/Podium';
 import Leaderboard from '@/components/Leaderboard';
 import Confetti from '@/components/Confetti';
+import BoardHero from '@/components/BoardHero';
 
 const LoginLink = () => <Link href="/login" className="board-login">Ban tổ chức · Đăng nhập ↗</Link>;
 
@@ -27,14 +28,13 @@ export default function Board() {
     return () => es.close();
   }, []);
 
-  // Ongoing fireworks while the final standings are on screen.
   useEffect(() => {
     if (data?.state !== 'final') return;
     const id = setInterval(() => setCelebrate((c) => c + 1), 9000);
     return () => clearInterval(id);
   }, [data?.state]);
 
-  if (!data) return <div className="public-stage board-live"><LoginLink /></div>;
+  if (!data) return <div className="board-split"><BoardHero phase="live" /><div className="board-standings"><LoginLink /></div></div>;
 
   if (data.state === 'drafting') return (
     <div className="wait-stage">
@@ -51,23 +51,23 @@ export default function Board() {
 
   const phase = data.state;
   return (
-    <div className={'public-stage board-live' + (phase === 'final' ? ' board-final' : '')}>
+    <div className={'board-split' + (phase === 'final' ? ' board-final' : '')}>
       {phase === 'final' && <Confetti fire={celebrate} />}
-      <div className="pub-head">
-        <div>
-          <div className="eyebrow" style={{ color: 'var(--cyan)' }}>Vòng chung kết · Bảng xếp hạng trực tiếp</div>
-          <div className="pub-title">Automotive <span>Hackathon</span> 2026</div>
+      <BoardHero phase={phase} />
+      <div className="board-standings">
+        <div className="standings-head">
+          <h2>Bảng xếp hạng {phase === 'final' ? 'chung cuộc' : 'trực tiếp'}</h2>
+          <span className="pill live">{phase === 'final' ? '● CHUNG CUỘC' : '● ĐIỂM TẠM · LIVE'}</span>
         </div>
-        <span className="pill live" style={{ fontSize: 13, padding: '8px 16px' }}>{phase === 'final' ? '● CHUNG CUỘC' : '● ĐIỂM TẠM · LIVE'}</span>
+        {phase === 'provisional' && (
+          <div className="prov-banner"><span className="pb-ic">⏳</span>
+            <div><b>ĐIỂM TẠM — chưa có điểm Trưởng BGK</b><p>Cập nhật realtime theo từng giám khảo.</p></div>
+            <span className="prov-tag">4/5 GK</span></div>
+        )}
+        {phase === 'final' && <Podium rows={data.rows} baremTotal={data.baremTotal} />}
+        <Leaderboard rows={data.rows} phase={phase} baremTotal={data.baremTotal} />
+        <LoginLink />
       </div>
-      {phase === 'provisional' && (
-        <div className="prov-banner"><span className="pb-ic">⏳</span>
-          <div><b>ĐIỂM TẠM — chưa có điểm Trưởng Ban giám khảo</b><p>Bảng cập nhật realtime theo từng giám khảo.</p></div>
-          <span className="prov-tag">4/5 GIÁM KHẢO</span></div>
-      )}
-      {phase === 'final' && <Podium rows={data.rows} baremTotal={data.baremTotal} />}
-      <Leaderboard rows={data.rows} phase={phase} baremTotal={data.baremTotal} />
-      <LoginLink />
     </div>
   );
 }
