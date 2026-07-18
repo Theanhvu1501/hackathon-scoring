@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
-import Podium from '@/components/Podium';
 import Leaderboard from '@/components/Leaderboard';
 import Confetti from '@/components/Confetti';
 import BoardHero from '@/components/BoardHero';
@@ -53,7 +52,7 @@ export default function Board() {
   return (
     <div className={'board-split' + (phase === 'final' ? ' board-final' : '')}>
       {phase === 'final' && <Confetti fire={celebrate} />}
-      <BoardHero phase={phase} imageUrl={data.heroImageUrl} />
+      <BoardHero phase={phase} team={data.rows[0]} imageUrl={data.heroImageUrl} />
       <div className="board-standings">
         <div className="standings-head">
           <div className="st-kicker">Automotive Hackathon 2026</div>
@@ -66,7 +65,6 @@ export default function Board() {
             <div><b>ĐIỂM TẠM — chưa có điểm Trưởng BGK</b><p>Cập nhật realtime theo từng giám khảo.</p></div>
             <span className="prov-tag">4/5 GK</span></div>
         )}
-        {phase === 'final' && <Podium rows={data.rows} baremTotal={data.baremTotal} />}
         <Leaderboard rows={data.rows} phase={phase} baremTotal={data.baremTotal} />
         <LoginLink />
       </div>
