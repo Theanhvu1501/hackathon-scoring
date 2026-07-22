@@ -1,9 +1,21 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-// Fixed, human-readable access codes so they stay stable across every deploy/reseed.
-// Admin code can be overridden with the ADMIN_ACCESS_CODE env var.
+// DESTRUCTIVE: this script wipes scores/teams/users before recreating demo data.
+// It must never run automatically on container start — see docker-compose.yml.
+// Running it against a database that already has users aborts unless SEED_FORCE=1.
+
+// Human-readable access codes. The defaults are public in this repo, so every
+// deployment must override them via env (see .env.example).
 const ADMIN_CODE = process.env.ADMIN_ACCESS_CODE || 'ADMIN-2026';
+const HEAD_CODE = process.env.HEAD_ACCESS_CODE || 'HEAD-2026';
+const JUDGE_CODES = (process.env.JUDGE_ACCESS_CODES || 'BGK2-2026,BGK3-2026,BGK4-2026,BGK5-2026')
+  .split(',').map((c) => c.trim()).filter(Boolean);
+
+// Demo scores are useful locally but are noise on a real deployment.
+const WITH_SCORES = process.env.SEED_SCORES
+  ? process.env.SEED_SCORES !== '0'
+  : process.env.NODE_ENV !== 'production';
 
 const TEAMS = [
   { code:'EV', name:'EV Nexus',     tag:'Quản lý pin & định tuyến sạc' },
@@ -23,14 +35,25 @@ const CRITERIA = [
   { name:'Thuyết trình', description:'Trình bày mạch lạc, thuyết phục', maxScore:10, order:4 },
 ];
 const JUDGES = [
-  { name:'Nguyễn Văn Minh', isHead:true,  code:'HEAD-2026' },
-  { name:'Trần Thị Lan',    isHead:false, code:'BGK2-2026' },
-  { name:'Lê Hoàng Sơn',    isHead:false, code:'BGK3-2026' },
-  { name:'Phạm Thu Hà',     isHead:false, code:'BGK4-2026' },
-  { name:'Đỗ Minh Phúc',    isHead:false, code:'BGK5-2026' },
-];
+  { name:'Nguyễn Văn Minh', isHead:true,  code: HEAD_CODE },
+  { name:'Trần Thị Lan',    isHead:false, code: JUDGE_CODES[0] },
+  { name:'Lê Hoàng Sơn',    isHead:false, code: JUDGE_CODES[1] },
+  { name:'Phạm Thu Hà',     isHead:false, code: JUDGE_CODES[2] },
+  { name:'Đỗ Minh Phúc',    isHead:false, code: JUDGE_CODES[3] },
+].filter((j) => j.code);
 
 async function main() {
+  const existing = await prisma.user.count();
+  if (existing > 0 && process.env.SEED_FORCE !== '1') {
+    const scores = await prisma.score.count();
+    console.error(
+      `\n  DỪNG: database đã có ${existing} user và ${scores} điểm.\n` +
+      '  Seed sẽ XOÁ SẠCH toàn bộ team / thành viên / tiêu chí / BGK / điểm.\n' +
+      '  Nếu thật sự muốn reset (nhớ backup trước), chạy lại với SEED_FORCE=1.\n',
+    );
+    process.exit(1);
+  }
+
   await prisma.score.deleteMany();
   await prisma.member.deleteMany();
   await prisma.criterion.deleteMany();
@@ -61,7 +84,7 @@ async function main() {
     EV:{ base:46.0, head:50 }, CV:{ base:47.5, head:41 }, RM:{ base:44.0, head:49 }, AP:{ base:45.5, head:43 },
     TX:{ base:41.0, head:48 }, C9:{ base:43.5, head:37 }, VL:{ base:40.0, head:38 }, SD:{ base:42.0, head:33 },
   };
-  for (const team of teams) {
+  for (const team of WITH_SCORES ? teams : []) {
     const tg = target[team.code];
     for (const judge of judges) {
       const total = judge.isHead ? tg.head : tg.base;
@@ -73,7 +96,7 @@ async function main() {
     }
   }
 
-  console.log('Seed done.');
+  console.log(`Seed done${WITH_SCORES ? ' (kèm điểm mẫu)' : ' (không có điểm mẫu)'}.`);
   console.log('ADMIN access code:', admin.accessCode);
   for (const j of judges) console.log(`JUDGE ${j.isHead?'(HEAD)':'      '} ${j.name}: ${(await prisma.user.findUnique({where:{id:j.id}}))!.accessCode}`);
 }

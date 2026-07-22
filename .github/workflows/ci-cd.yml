@@ -1,0 +1,133 @@
+name: CI/CD
+
+# CHỈ chạy khi bấm tay (Actions → CI/CD → Run workflow).
+# Hiện dự án deploy thủ công nên các trigger tự động được tắt có chủ đích —
+# bật lại bằng cách bỏ comment 4 dòng dưới, SAU KHI đã khai báo đủ secrets
+# (SSH_HOST/SSH_USER/SSH_PORT/SSH_PRIVATE_KEY/SSH_KNOWN_HOSTS), nếu không
+# job deploy sẽ fail ngay ở bước kết nối.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [master]
+  # pull_request:
+  #   branches: [master]
+
+# Chỉ cho phép 1 lần deploy chạy tại một thời điểm. Không cancel giữa chừng:
+# huỷ ngang lúc container đang build/migrate sẽ để lại trạng thái dở dang.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Typecheck & test
+    runs-on: ubuntu-latest
+
+    # Bộ test có phần tích hợp chạy thẳng vào Postgres (tests/services.*.test.ts,
+    # reveal-flow) nên CI phải dựng DB thật, không mock được.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: hs
+          POSTGRES_PASSWORD: hs
+          POSTGRES_DB: hackathon
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U hs -d hackathon"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql://hs:hs@localhost:5432/hackathon?schema=public
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Prisma generate + migrate
+        run: |
+          npx prisma generate
+          npx prisma migrate deploy
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+
+      # Bắt lỗi build sớm ở CI thay vì để chết trên VPS giữa lúc deploy.
+      - name: Build
+        run: npm run build
+
+  deploy:
+    name: Deploy to VPS
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "${{ secrets.SSH_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT || '22' }}
+          APP_DIR: ${{ vars.APP_DIR || '/opt/hackathon-scoring' }}
+          SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" \
+              -o StrictHostKeyChecking=yes -o ConnectTimeout=15 \
+              "$SSH_USER@$SSH_HOST" "APP_DIR='$APP_DIR' SHA='$SHA' bash -s" <<'REMOTE'
+          set -euo pipefail
+          cd "$APP_DIR"
+
+          # Ghi lại commit đang chạy để rollback nếu bản mới không lên được.
+          PREV="$(git rev-parse HEAD)"
+          echo "==> commit hiện tại: $PREV"
+
+          git fetch --prune origin
+          git reset --hard "$SHA"
+          echo "==> deploy commit: $SHA"
+
+          # migrate deploy nằm trong command của container (docker-compose.yml),
+          # tự chạy khi container start. KHÔNG seed — seed sẽ xoá sạch dữ liệu.
+          docker compose up -d --build
+
+          echo "==> chờ app healthy"
+          ok=""
+          for i in $(seq 1 60); do
+            if curl -sf -o /dev/null http://127.0.0.1:3100/api/results; then ok=1; break; fi
+            sleep 5
+          done
+
+          if [ -z "$ok" ]; then
+            echo "!! app không lên sau 5 phút — rollback về $PREV"
+            docker compose logs --tail=80 app || true
+            git reset --hard "$PREV"
+            docker compose up -d --build
+            exit 1
+          fi
+
+          # VPS chỉ còn ~10GB trống; mỗi lần build đẻ thêm image cũ + cache.
+          docker image prune -f
+          docker builder prune -f --filter 'until=168h' || true
+
+          echo "==> deploy OK"
+          docker compose ps
+          REMOTE

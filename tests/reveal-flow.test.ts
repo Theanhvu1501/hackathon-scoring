@@ -6,8 +6,13 @@ import { setRevealState, getRevealState, getResults } from '@/lib/services/revea
 afterAll(disconnect);
 // Re-seed to a known state so this test is deterministic regardless of what
 // other integration tests did to shared DB state (e.g. head-judge flag).
+// SEED_FORCE + SEED_SCORES are required: the seed refuses to wipe a populated
+// database on its own, and this test asserts on the sample scores it creates.
 beforeAll(() => {
-  execSync('npx tsx prisma/seed.ts', { stdio: 'ignore' });
+  execSync('npx tsx prisma/seed.ts', {
+    stdio: 'ignore',
+    env: { ...process.env, SEED_FORCE: '1', SEED_SCORES: '1' },
+  });
 }, 120000);
 
 describe('reveal flow', () => {

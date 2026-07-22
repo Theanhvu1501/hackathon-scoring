@@ -113,12 +113,15 @@ a{color:inherit;text-decoration:none}
 .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-size:13.5px;font-weight:600;transition:.15s;border:1px solid var(--line-strong);color:var(--text);background:#fff}
 .btn:hover{border-color:var(--blue);background:rgba(37,99,235,.06)}
 .btn-primary{background:var(--orange);color:#fff;border-color:transparent;box-shadow:0 6px 16px -10px rgba(243,112,33,.8)}
-.btn-primary:hover{filter:brightness(1.05)}
+/* Các biến thể phải tự khai lại background + border-color khi hover: `.btn:hover`
+   (0-2-0) có specificity cao hơn `.btn-primary`/`.btn-danger`/`.btn-ghost` (0-1-0)
+   nên nếu không khai lại sẽ bị đè thành nền xanh nhạt + viền xanh. */
+.btn-primary:hover{background:var(--orange-dk);border-color:transparent;color:#fff}
 .btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
-.btn-ghost:hover{color:var(--text);background:rgba(23,54,120,.05)}
+.btn-ghost:hover{color:var(--text);background:rgba(23,54,120,.05);border-color:transparent}
 .btn-sm{padding:6px 11px;font-size:12px;border-radius:8px}
 .btn-danger{color:#fff;border-color:transparent;background:var(--red)}
-.btn-danger:hover{background:#c9302f}
+.btn-danger:hover{background:#c9302f;border-color:transparent}
 
 .card{background:linear-gradient(180deg,var(--navy-850),var(--navy-800));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .card-pad{padding:20px}

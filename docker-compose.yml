@@ -1,26 +1,44 @@
 services:
   db:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: hs
-      POSTGRES_PASSWORD: hs
-      POSTGRES_DB: hackathon
-    ports: ["5432:5432"]
+      POSTGRES_USER: ${POSTGRES_USER:-hs}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?thieu POSTGRES_PASSWORD - hay copy .env.example thanh .env}
+      POSTGRES_DB: ${POSTGRES_DB:-hackathon}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hs -d hackathon"]
-      interval: 3s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hs} -d ${POSTGRES_DB:-hackathon}"]
+      interval: 5s
       timeout: 3s
       retries: 20
-    volumes: [ "hs_pgdata:/var/lib/postgresql/data" ]
+    # Bind mount: dữ liệu Postgres nằm ở ./data/postgres ngay trên host.
+    # Sống sót qua mọi restart / rebuild image / `docker compose down`,
+    # và backup được bằng cách copy thư mục (xem docs/DEPLOY.md).
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    # Không publish 5432 ra ngoài: trên VPS đó là mở DB ra internet.
+    # Cần truy cập từ host để debug thì dùng:
+    #   docker compose exec db psql -U hs -d hackathon
+
   app:
     build: .
+    restart: unless-stopped
     depends_on:
       db: { condition: service_healthy }
+    env_file: [.env]
     environment:
-      DATABASE_URL: "postgresql://hs:hs@db:5432/hackathon?schema=public"
-      SESSION_SECRET: "change-me-in-prod-please-32-chars-min"
-      ADMIN_ACCESS_CODE: "ADMIN-2026"
       NODE_ENV: production
-    ports: ["3000:3000"]
-    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts && node server.js"
-volumes: { hs_pgdata: {} }
+    # Chỉ lắng nghe trên localhost — nginx đứng trước lo TLS.
+    # Host dùng 3100 chứ không phải 3000: trên VPS các port 3000/3001/4000/4001/
+    # 5000/5001 đã bị những app khác trên cùng máy chiếm.
+    ports: ["127.0.0.1:3100:3000"]
+    # KHÔNG chạy seed ở đây. prisma/seed.ts xoá sạch score/team/user trước khi
+    # tạo lại dữ liệu mẫu, nên nếu để trong command thì mỗi lần container restart
+    # là mất toàn bộ điểm đã chấm. Seed chỉ chạy tay đúng 1 lần — xem docs/DEPLOY.md.
+    command: sh -c "npx prisma migrate deploy && node server.js"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
