@@ -1,13 +1,16 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 export default function Login() {
-  const [code,setCode]=useState(''); const [err,setErr]=useState(''); const router=useRouter();
+  const [code,setCode]=useState(''); const [err,setErr]=useState('');
   async function submit(e:React.FormEvent){ e.preventDefault(); setErr('');
     const res = await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
     if(!res.ok){ setErr((await res.json()).error||'Lỗi'); return; }
     const { role } = await res.json();
-    router.push(role==='admin'?'/admin':'/judge');
+    // Hard navigation, KHÔNG dùng router.push: Next 14 giữ RSC payload của
+    // /admin và /judge trong Client Router Cache (in-memory, sống qua mọi soft
+    // navigation). Đăng nhập bằng tài khoản khác mà điều hướng mềm sẽ dựng lại
+    // layout đã cache của phiên trước → hiện sai tên giám khảo.
+    window.location.href = role==='admin' ? '/admin' : '/judge';
   }
   return (
     <div style={{maxWidth:440,margin:'8vh auto'}}>

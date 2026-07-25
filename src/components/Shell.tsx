@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { cx } from '@/lib/ui';
 import ConfirmProvider from '@/components/ConfirmProvider';
@@ -45,7 +45,6 @@ export default function Shell({
   children: React.ReactNode;
 }) {
   const path = usePathname();
-  const router = useRouter();
   const nav = role === 'admin' ? ADMIN_NAV : JUDGE_NAV;
   const crumbs = buildCrumbs(path, role);
   const home = role === 'admin' ? '/admin' : '/judge';
@@ -65,7 +64,9 @@ export default function Shell({
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    // Hard navigation để xoá sạch Client Router Cache của Next — soft navigation
+    // giữ lại RSC payload (kèm tên) của phiên vừa đăng xuất. Xem login/page.tsx.
+    window.location.href = '/login';
   }
 
   const initials = userName ? userName.trim().split(' ').pop()!.slice(0, 1).toUpperCase() : '👤';
