@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { judgeTotal, teamAverage, computeLeaderboard, ScoreLite, TeamLite } from '@/lib/scoring';
+import { judgeTotal, teamTotal, countedJudges, computeLeaderboard, ScoreLite, TeamLite } from '@/lib/scoring';
 
 const teams: TeamLite[] = [
   { id: 't1', name: 'EV Nexus', code: 'EV' },
@@ -18,7 +18,7 @@ const scores: ScoreLite[] = [
   s('j3','t1','c1',23), s('j3','t1','c2',23),
   s('j4','t1','c1',24), s('j4','t1','c2',22),
   s('jH','t1','c1',25), s('jH','t1','c2',25),
-  // t2: j1..j4 totals 48,48,47,47 -> avg 47.5; jH gives 40 (drops it), final avg 46.0
+  // t2: j1..j4 totals 48,48,47,47 -> sum 190; jH gives 40, final sum 230 (loses to t1)
   s('j1','t2','c1',24), s('j1','t2','c2',24),
   s('j2','t2','c1',24), s('j2','t2','c2',24),
   s('j3','t2','c1',24), s('j3','t2','c2',23),
@@ -37,20 +37,40 @@ describe('judgeTotal', () => {
   });
 });
 
-describe('teamAverage', () => {
-  it('averages all judges including head', () => {
-    // t1: (46+46+46+46+50)/5 = 46.8
-    expect(teamAverage(scores, 't1').avg).toBeCloseTo(46.8, 5);
-    expect(teamAverage(scores, 't1').judgeCount).toBe(5);
+describe('teamTotal', () => {
+  it('sums every judge total including head', () => {
+    // t1: 46+46+46+46+50 = 234
+    expect(teamTotal(scores, 't1').total).toBeCloseTo(234, 5);
+    expect(teamTotal(scores, 't1').judgeCount).toBe(5);
   });
   it('excludes head judge when asked', () => {
-    // t1 without jH: (46+46+46+46)/4 = 46
-    const r = teamAverage(scores, 't1', { excludeJudgeId: 'jH' });
-    expect(r.avg).toBeCloseTo(46, 5);
+    // t1 without jH: 46+46+46+46 = 184
+    const r = teamTotal(scores, 't1', { excludeJudgeId: 'jH' });
+    expect(r.total).toBeCloseTo(184, 5);
     expect(r.judgeCount).toBe(4);
   });
-  it('returns null avg for team with no scores', () => {
-    expect(teamAverage(scores, 'tX').avg).toBeNull();
+  it('does not divide by judge count — a partly scored team stays low', () => {
+    // t3 has a single judge at 40. Averaging would have shown 40 (mid-table);
+    // summing keeps it at 40 while fully scored teams climb past 180.
+    expect(teamTotal(scores, 't3').total).toBeCloseTo(40, 5);
+    expect(teamTotal(scores, 't3').judgeCount).toBe(1);
+  });
+  it('returns null total for team with no scores', () => {
+    expect(teamTotal(scores, 'tX').total).toBeNull();
+  });
+});
+
+describe('countedJudges', () => {
+  const judges = [
+    { id: 'j1', isHead: false }, { id: 'j2', isHead: false },
+    { id: 'j3', isHead: false }, { id: 'j4', isHead: false },
+    { id: 'jH', isHead: true },
+  ];
+  it('drops the head judge while provisional', () => {
+    expect(countedJudges(judges, 'provisional')).toBe(4);
+  });
+  it('counts everyone once final', () => {
+    expect(countedJudges(judges, 'final')).toBe(5);
   });
 });
 
@@ -58,16 +78,16 @@ describe('computeLeaderboard', () => {
   it('provisional excludes head judge', () => {
     const rows = computeLeaderboard({ teams, scores, headJudgeId: 'jH', phase: 'provisional' });
     const byId = Object.fromEntries(rows.map(r => [r.team.id, r]));
-    expect(byId['t2'].score).toBeCloseTo(47.5, 5); // t2 leads provisionally
-    expect(byId['t1'].score).toBeCloseTo(46, 5);
+    expect(byId['t2'].score).toBeCloseTo(190, 5); // t2 leads provisionally
+    expect(byId['t1'].score).toBeCloseTo(184, 5);
     expect(rows[0].team.id).toBe('t2');
     expect(rows[0].rank).toBe(1);
   });
   it('final includes head judge and reshuffles', () => {
     const rows = computeLeaderboard({ teams, scores, headJudgeId: 'jH', phase: 'final' });
     const byId = Object.fromEntries(rows.map(r => [r.team.id, r]));
-    expect(byId['t1'].score).toBeCloseTo(46.8, 5);
-    expect(byId['t2'].score).toBeCloseTo(46, 5); // dropped by head
+    expect(byId['t1'].score).toBeCloseTo(234, 5);
+    expect(byId['t2'].score).toBeCloseTo(230, 5); // dropped by head
     expect(rows[0].team.id).toBe('t1'); // t1 wins final
   });
   it('teams with no score rank last with null score', () => {

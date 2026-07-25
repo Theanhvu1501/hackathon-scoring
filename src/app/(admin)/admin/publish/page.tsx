@@ -8,11 +8,13 @@ const STEPS = [{ k: 'drafting', n: '1', t: 'Đang chấm' }, { k: 'provisional',
 export default function Publish() {
   const [state, setState] = useState('drafting');
   const [hero, setHero] = useState<string>('');
+  const [banner, setBanner] = useState<string>('');
 
   async function load() {
     const [rev, img] = await Promise.all([fetcher('/api/reveal'), fetcher('/api/board/image')]);
     setState(rev.state);
     setHero(img.heroImageUrl || '');
+    setBanner(img.bannerImageUrl || '');
   }
   useEffect(() => { load(); }, []);
 
@@ -20,6 +22,10 @@ export default function Publish() {
   async function saveHero(v: string) {
     setHero(v);
     await fetcher('/api/board/image', { method: 'POST', body: JSON.stringify({ imageUrl: v || null }) });
+  }
+  async function saveBanner(v: string) {
+    setBanner(v);
+    await fetcher('/api/board/image', { method: 'POST', body: JSON.stringify({ bannerImageUrl: v || null }) });
   }
   const idx = STEPS.findIndex((s) => s.k === state);
 
@@ -46,10 +52,18 @@ export default function Publish() {
           </>}
         </div>
 
-        <div className="card card-pad">
-          <h3 style={{ fontSize: 15, marginBottom: 6 }}>Ảnh nền màn chiếu</h3>
-          <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>Ảnh hiển thị ở panel bên trái của trang board (nên là ảnh dọc/chân dung, độ phân giải tốt).</p>
-          <ImagePicker value={hero} onChange={saveHero} size={120} max={900} placeholder="＋ Ảnh" />
+        <div style={{ display: 'grid', gap: 16 }}>
+          <div className="card card-pad">
+            <h3 style={{ fontSize: 15, marginBottom: 6 }}>Banner màn chờ</h3>
+            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>Phủ kín trang board khi <b>chưa mở bảng điểm tạm</b>. Nên là ảnh ngang, tỉ lệ 16:9. Bỏ trống thì dùng màn chờ mặc định.</p>
+            <ImagePicker value={banner} onChange={saveBanner} size={120} max={1600} placeholder="＋ Banner" />
+          </div>
+
+          <div className="card card-pad">
+            <h3 style={{ fontSize: 15, marginBottom: 6 }}>Ảnh nền màn chiếu</h3>
+            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>Ảnh ở panel bên trái của bảng điểm khi đang chạy realtime (nên là ảnh dọc/chân dung, độ phân giải tốt).</p>
+            <ImagePicker value={hero} onChange={saveHero} size={120} max={900} placeholder="＋ Ảnh" />
+          </div>
         </div>
       </div>
     </>

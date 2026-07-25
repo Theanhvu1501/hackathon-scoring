@@ -12,7 +12,7 @@ export default function Results() {
       <span className={'pill '+(data.state==='final'?'live':'pending')}>{data.state==='final'?'Đã công bố':'Điểm tạm'}</span>
     </div>
     <div className="card"><table>
-      <thead><tr><th>#</th><th>Đội</th><th style={{textAlign:'right'}}>Điểm TB</th></tr></thead>
+      <thead><tr><th>#</th><th>Đội</th><th style={{textAlign:'right'}}>Tổng điểm</th></tr></thead>
       <tbody>{data.rows.map((r:any)=>(<tr key={r.team.id}>
         <td className="tnum">{r.tie?'T'+r.rank:r.rank}</td>
         <td><div className="tcell"><span className="team-ava" style={{background:'linear-gradient(135deg,#f37021,#ff9730)'}}>{r.team.code}</span><b>{r.team.name}</b></div></td>

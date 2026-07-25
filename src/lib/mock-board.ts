@@ -1,7 +1,7 @@
 // Mock data for the public board, enabled with ?mock=1.
 // Produces the exact shape of /api/results plus the optional extras the
 // timing tower can render (criteria, per-team breakdown, judge roster).
-import { computeLeaderboard, ScoreLite, TeamLite } from '@/lib/scoring';
+import { computeLeaderboard, countedJudges, ScoreLite, TeamLite } from '@/lib/scoring';
 
 export type BoardCriterion = { id: string; label: string; short: string; max: number; color: string };
 
@@ -89,15 +89,17 @@ export function buildMockResults(opts: MockOptions = {}) {
     teams, scores, headJudgeId: MOCK_JUDGES.find((j) => j.isHead)!.id, phase,
   });
 
-  // Average each criterion across the judges who submitted — this is what the
-  // segmented bar breaks the total down into.
+  // Sum each criterion across the judges this phase counts, so the segments add
+  // up to exactly the team total the tower prints next to them.
+  const headId = MOCK_JUDGES.find((j) => j.isHead)!.id;
   const breakdownFor = (teamId: string) =>
     MOCK_CRITERIA.map((crit) => {
-      const vals = scores.filter((s) => s.teamId === teamId && s.criterionId === crit.id);
+      const vals = scores.filter((s) =>
+        s.teamId === teamId && s.criterionId === crit.id && (phase === 'final' || s.judgeId !== headId));
       if (!vals.length) return { criterionId: crit.id, value: 0 };
       return {
         criterionId: crit.id,
-        value: Math.round((vals.reduce((a, s) => a + s.value, 0) / vals.length) * 10) / 10,
+        value: Math.round(vals.reduce((a, s) => a + s.value, 0) * 10) / 10,
       };
     });
 
@@ -116,7 +118,9 @@ export function buildMockResults(opts: MockOptions = {}) {
     state,
     rows,
     baremTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0),
+    maxTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0) * countedJudges(MOCK_JUDGES, phase),
     heroImageUrl: null,
+    bannerImageUrl: null,
     criteria: MOCK_CRITERIA,
     judges: MOCK_JUDGES.map((j) => ({
       ...j,

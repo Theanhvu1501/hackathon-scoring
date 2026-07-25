@@ -6,6 +6,17 @@ import Modal from '@/components/Modal';
 import { useConfirm } from '@/components/ConfirmProvider';
 
 type Judge = { id: string; name: string; isHead: boolean; accessCode: string };
+type Criterion = { id: string; name: string; maxScore: number; order: number };
+type DetailRow = {
+  teamId: string; teamName: string; teamCode: string;
+  values: Record<string, number>; total: number | null;
+  status: 'submitted' | 'draft' | 'none';
+};
+type Detail = { criteria: Criterion[]; rows: DetailRow[] };
+
+const STATUS_LABEL: Record<DetailRow['status'], string> = {
+  submitted: 'Đã nộp', draft: 'Nháp', none: 'Chưa chấm',
+};
 
 export default function Judges() {
   const [judges, setJudges] = useState<Judge[]>([]);
@@ -13,6 +24,8 @@ export default function Judges() {
   const [modal, setModal] = useState<null | 'add' | Judge>(null);
   const [form, setForm] = useState({ name: '', isHead: false });
   const [busy, setBusy] = useState(false);
+  const [detailOf, setDetailOf] = useState<Judge | null>(null);
+  const [detail, setDetail] = useState<Detail | null>(null);
   const confirm = useConfirm();
 
   async function load() { setJudges(await fetcher('/api/judges')); }
@@ -23,6 +36,10 @@ export default function Judges() {
 
   function openAdd() { setForm({ name: '', isHead: false }); setModal('add'); }
   function openEdit(j: Judge) { setForm({ name: j.name, isHead: j.isHead }); setModal(j); }
+  async function openDetail(j: Judge) {
+    setDetailOf(j); setDetail(null);
+    setDetail(await fetcher('/api/judges/' + j.id + '/scores'));
+  }
 
   async function save() {
     if (!form.name) return;
@@ -46,6 +63,7 @@ export default function Judges() {
     { key: 'code', header: 'Mã truy cập', filterText: (j) => j.accessCode, render: (j) => <span className="code-chip">{j.accessCode}</span> },
     { key: 'act', header: 'Thao tác', align: 'right', render: (j) => (
       <span style={{ whiteSpace: 'nowrap' }}>
+        <button className="btn btn-sm" onClick={() => openDetail(j)}>Xem điểm</button>{' '}
         <button className="btn btn-sm" onClick={() => openEdit(j)}>Sửa</button>{' '}
         <button className="btn btn-sm" onClick={() => regen(j.id)}>↻ Đổi mã</button>{' '}
         {!j.isHead && <button className="btn btn-sm btn-danger" onClick={() => del(j)}>Xoá</button>}
@@ -83,6 +101,57 @@ export default function Judges() {
             Đặt làm <b>Trưởng BGK</b> (lá bài quyết định — chỉ một người)
           </label>
           {modal === 'add' && <div className="hint" style={{ marginTop: 10 }}>Mã truy cập sẽ tự sinh sau khi tạo.</div>}
+        </Modal>
+      )}
+
+      {detailOf && (
+        <Modal
+          title={`Phiếu chấm · ${detailOf.name}`}
+          maxWidth={860}
+          onClose={() => { setDetailOf(null); setDetail(null); }}
+          footer={<button className="btn" onClick={() => { setDetailOf(null); setDetail(null); }}>Đóng</button>}
+        >
+          {!detail ? <div style={{ color: 'var(--muted-2)' }}>Đang tải…</div> : (
+            <div style={{ overflowX: 'auto' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Đội</th>
+                    {detail.criteria.map((c) => (
+                      <th key={c.id} style={{ textAlign: 'right', whiteSpace: 'nowrap' }} title={c.name}>
+                        {c.name} <span style={{ color: 'var(--muted-2)', fontWeight: 400 }}>/{c.maxScore}</span>
+                      </th>
+                    ))}
+                    <th style={{ textAlign: 'right' }}>Tổng</th>
+                    <th style={{ textAlign: 'right' }}>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {detail.rows.map((r) => (
+                    <tr key={r.teamId} style={r.status === 'none' ? { opacity: .55 } : undefined}>
+                      <td><b>{r.teamName}</b> <span className="code-chip">{r.teamCode}</span></td>
+                      {detail.criteria.map((c) => (
+                        <td key={c.id} className="tnum" style={{ textAlign: 'right' }}>
+                          {r.values[c.id] ?? '—'}
+                        </td>
+                      ))}
+                      <td className="tnum" style={{ textAlign: 'right' }}>
+                        <b>{r.total === null ? '—' : r.total.toFixed(1)}</b>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span className={'pill ' + (r.status === 'submitted' ? 'done' : 'pending')}>
+                          {STATUS_LABEL[r.status]}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  {detail.rows.length === 0 && (
+                    <tr><td colSpan={detail.criteria.length + 3} style={{ color: 'var(--muted-2)' }}>Chưa có đội nào.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </Modal>
       )}
     </>

@@ -1,7 +1,7 @@
 'use client';
 import { useLayoutEffect, useRef } from 'react';
 
-export default function Leaderboard({ rows, phase, baremTotal }: { rows: any[]; phase: string; baremTotal: number }) {
+export default function Leaderboard({ rows, phase, maxTotal }: { rows: any[]; phase: string; maxTotal: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const posRef = useRef<Map<string, number>>(new Map());
 
@@ -42,7 +42,7 @@ export default function Leaderboard({ rows, phase, baremTotal }: { rows: any[]; 
               <span className="gn">{r.team.name}</span>
               <span className="gt">{r.team.tag}</span>
             </div>
-            <div className="gscore tnum">{r.score === null ? '—' : r.score.toFixed(1)}<span className="gof"> / {baremTotal}</span></div>
+            <div className="gscore tnum">{r.score === null ? '—' : r.score.toFixed(1)}<span className="gof"> / {maxTotal}</span></div>
           </div>
         );
       })}

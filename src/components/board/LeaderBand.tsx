@@ -11,8 +11,8 @@ type Row = {
 // project visual, team mark, crew. Uploaded images take priority over the
 // generated stand-ins.
 export default function LeaderBand({
-  row, baremTotal, isFinal, heroImageUrl,
-}: { row: Row; baremTotal: number; isFinal: boolean; heroImageUrl?: string | null }) {
+  row, maxTotal, isFinal, heroImageUrl,
+}: { row: Row; maxTotal: number; isFinal: boolean; heroImageUrl?: string | null }) {
   const t = row.team;
   const crew = (t.members ?? []).slice(0, 6);
   const hue = teamHue(t.code);
@@ -52,7 +52,7 @@ export default function LeaderBand({
 
       <div className="pw-lead-score">
         <span className="n">{row.score === null ? '—' : row.score.toFixed(1)}</span>
-        <span className="of">/ {baremTotal} ĐIỂM</span>
+        <span className="of">/ {maxTotal} ĐIỂM</span>
       </div>
     </div>
   );

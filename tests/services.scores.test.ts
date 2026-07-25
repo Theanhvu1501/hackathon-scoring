@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import { prisma, disconnect } from './helpers/db';
-import { upsertScores, getJudgeScores, judgeProgress } from '@/lib/services/scores';
+import { upsertScores, getJudgeScores, judgeProgress, judgeScoreDetail } from '@/lib/services/scores';
 afterAll(disconnect);
 
 let judgeId:string, teamId:string, critIds:string[]=[];
@@ -32,5 +32,40 @@ describe('scores service', () => {
     const mine = progress.find(p => p.judgeId === judgeId && p.teamId === teamId);
     expect(mine).toBeTruthy();
     expect(mine!.submitted).toBe(true);
+  });
+});
+
+describe('judgeScoreDetail', () => {
+  it('reports one row per team, marking teams the judge never opened', async () => {
+    const untouched = await prisma.team.create({ data: { name: 'ST Untouched', code: 'SU' } });
+    const detail = await judgeScoreDetail(judgeId);
+
+    const mine = detail.rows.find((r) => r.teamId === teamId)!;
+    // upserted above as 10 + 9, submitted
+    expect(mine.total).toBe(19);
+    expect(mine.status).toBe('submitted');
+    expect(mine.values[critIds[0]]).toBe(10);
+    expect(mine.values[critIds[1]]).toBe(9);
+
+    const blank = detail.rows.find((r) => r.teamId === untouched.id)!;
+    expect(blank.total).toBeNull();
+    expect(blank.status).toBe('none');
+    expect(blank.values).toEqual({});
+  });
+
+  it('marks a team with unsubmitted scores as a draft', async () => {
+    const draftTeam = await prisma.team.create({ data: { name: 'ST Draft', code: 'SD' } });
+    await upsertScores(judgeId, draftTeam.id, [{ criterionId: critIds[0], value: 7 }], false);
+
+    const detail = await judgeScoreDetail(judgeId);
+    const row = detail.rows.find((r) => r.teamId === draftTeam.id)!;
+    expect(row.status).toBe('draft');
+    expect(row.total).toBe(7);
+  });
+
+  it('lists criteria in barem order so the table columns line up', async () => {
+    const detail = await judgeScoreDetail(judgeId);
+    const orders = detail.criteria.map((c) => c.order);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
   });
 });

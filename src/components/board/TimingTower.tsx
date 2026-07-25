@@ -12,8 +12,8 @@ type Row = {
 const FALLBACK = '#0047FF';
 
 export default function TimingTower({
-  rows, baremTotal, criteria = [],
-}: { rows: Row[]; baremTotal: number; criteria?: BoardCriterion[] }) {
+  rows, maxTotal, criteria = [],
+}: { rows: Row[]; maxTotal: number; criteria?: BoardCriterion[] }) {
   const towerRef = useRef<HTMLDivElement>(null);
   const offsets = useRef<Map<string, number>>(new Map());
   const prevRank = useRef<Map<string, number>>(new Map());
@@ -73,8 +73,8 @@ export default function TimingTower({
 
       {rows.map((r) => {
         const scored = r.score !== null;
-        const pct = scored ? (r.score! / baremTotal) * 100 : 0;
-        const markPct = leaderScore ? (leaderScore / baremTotal) * 100 : 100;
+        const pct = scored ? (r.score! / maxTotal) * 100 : 0;
+        const markPct = leaderScore ? (leaderScore / maxTotal) * 100 : 100;
         const moved = delta.current.get(r.team.id) ?? 0;
         const gap = scored && leaderScore !== null ? r.score! - leaderScore : null;
         const segments = r.breakdown?.length
@@ -108,7 +108,7 @@ export default function TimingTower({
 
             <div className="pw-score">
               {scored ? r.score!.toFixed(1) : '—'}
-              <span className="of">/ {baremTotal}</span>
+              <span className="of">/ {maxTotal}</span>
             </div>
 
             <div

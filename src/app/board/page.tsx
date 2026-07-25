@@ -95,7 +95,21 @@ export default function Board() {
     );
   }
 
+  // Before realtime starts, the screen is just the organiser's banner. Only when
+  // no banner has been uploaded do we fall back to the classic waiting screen —
+  // that fallback is how the old design stays reachable, no extra flag needed.
   if (data.state === 'drafting') {
+    if (data.bannerImageUrl) {
+      // Keeps the `pitwall` class so .pw-login / .pw-mockflag still resolve the
+      // board's CSS variables; .is-banner strips the layout down to the image.
+      return (
+        <div className="pitwall is-banner">
+          <img className="pw-banner" src={data.bannerImageUrl} alt="" />
+          <StaffLink />
+          {mock && <span className="pw-mockflag">MOCK DATA</span>}
+        </div>
+      );
+    }
     return (
       <div className="pitwall">
         <AmbientNet />
@@ -137,11 +151,11 @@ export default function Board() {
         <div>
           {leader && (
             <LeaderBand
-              row={leader} baremTotal={data.baremTotal}
+              row={leader} maxTotal={data.maxTotal}
               isFinal={isFinal} heroImageUrl={data.heroImageUrl}
             />
           )}
-          <TimingTower rows={rows} baremTotal={data.baremTotal} criteria={data.criteria} />
+          <TimingTower rows={rows} maxTotal={data.maxTotal} criteria={data.criteria} />
         </div>
         <BoardRail
           criteria={data.criteria}

@@ -31,6 +31,17 @@ describe('reveal flow', () => {
     expect(provLeader).toBe('CV');
     expect(finLeader).toBe('EV');
 
+    // Denominator follows the judges the phase counts: 4 of 5 while provisional
+    // (head held back), all 5 once final.
+    expect(prov.judgeCount).toBe(4);
+    expect(prov.maxTotal).toBe(200);
+    expect(fin.judgeCount).toBe(5);
+    expect(fin.maxTotal).toBe(250);
+
+    // Scores are sums, not averages: seed gives CV four judges at 47.5 each.
+    const provCV = prov.rows.find((r) => r.team.code === 'CV')!;
+    expect(provCV.score).toBeCloseTo(190, 5);
+
     await setRevealState('drafting'); // reset
   });
 });
