@@ -1,7 +1,7 @@
 // Mock data for the public board, enabled with ?mock=1.
 // Produces the exact shape of /api/results plus the optional extras the
 // timing tower can render (criteria, per-team breakdown, judge roster).
-import { computeLeaderboard, countedJudges, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
+import { computeLeaderboard, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
 
 export type BoardCriterion = { id: string; label: string; short: string; max: number; color: string };
 
@@ -85,9 +85,7 @@ export function buildMockResults(opts: MockOptions = {}) {
   });
 
   const phase = state === 'final' ? 'final' : 'provisional';
-  const ranked = computeLeaderboard({
-    teams, scores, headJudgeId: MOCK_JUDGES.find((j) => j.isHead)!.id, phase,
-  });
+  const ranked = computeLeaderboard({ teams, scores });
 
   // Sum each criterion across the judges this phase counts, so the segments add
   // up to exactly the team total the tower prints next to them.
@@ -124,7 +122,8 @@ export function buildMockResults(opts: MockOptions = {}) {
     state,
     rows,
     baremTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0),
-    maxTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0) * countedJudges(MOCK_JUDGES, phase),
+    maxTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0)
+      * MOCK_JUDGES.filter((j) => phase === 'final' || !j.isHead).length,
     heroImageUrl: null,
     bannerImageUrl: null,
     criteria: MOCK_CRITERIA,

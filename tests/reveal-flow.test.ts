@@ -16,31 +16,29 @@ beforeAll(() => {
 }, 120000);
 
 describe('reveal flow', () => {
-  it('provisional excludes head, final includes head, ranking changes', async () => {
+  it('every judge counts in both states — no head-judge hold left', async () => {
     await setRevealState('provisional');
     expect(await getRevealState()).toBe('provisional');
     const prov = await getResults();
-    const provLeader = prov.rows[0].team.code;
 
     await setRevealState('final');
     const fin = await getResults();
-    const finLeader = fin.rows[0].team.code;
 
     expect(prov.baremTotal).toBe(50);
-    // seed is designed so provisional leader (CV) differs from final leader (EV)
-    expect(provLeader).toBe('CV');
-    expect(finLeader).toBe('EV');
+    // Cơ chế giữ kín điểm trưởng BGK đã bỏ: hai state cho cùng một bảng xếp hạng.
+    // Seed cho EV 4×46 + head 50 = 234, CV 4×47.5 + head 41 = 231.
+    expect(prov.rows[0].team.code).toBe('EV');
+    expect(fin.rows[0].team.code).toBe('EV');
 
-    // Denominator follows the judges the phase counts: 4 of 5 while provisional
-    // (head held back), all 5 once final.
-    expect(prov.judgeCount).toBe(4);
-    expect(prov.maxTotal).toBe(200);
+    // Mẫu số là barem × số giám khảo active, không phụ thuộc state.
+    expect(prov.judgeCount).toBe(5);
+    expect(prov.maxTotal).toBe(250);
     expect(fin.judgeCount).toBe(5);
     expect(fin.maxTotal).toBe(250);
 
-    // Scores are sums, not averages: seed gives CV four judges at 47.5 each.
-    const provCV = prov.rows.find((r) => r.team.code === 'CV')!;
-    expect(provCV.score).toBeCloseTo(190, 5);
+    // Điểm là tổng, không phải trung bình.
+    expect(prov.rows.find((r) => r.team.code === 'CV')!.score).toBeCloseTo(231, 5);
+    expect(prov.rows.find((r) => r.team.code === 'EV')!.score).toBeCloseTo(234, 5);
 
     await setRevealState('drafting'); // reset
   });

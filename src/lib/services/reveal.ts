@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { computeLeaderboard, countedJudges, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
+import { computeLeaderboard, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
 import { broadcast } from '@/lib/events';
 
 type State = 'drafting' | 'provisional' | 'final';
@@ -44,7 +44,7 @@ export async function getResults() {
   const phase = state === 'final' ? 'final' : 'provisional';
   const teamsLite: TeamLite[] = teams.map(t => ({ id:t.id, name:t.name, code:t.code, logoUrl:t.logoUrl, tag:t.tag }));
   const scores: ScoreLite[] = scoreRows;
-  const rows = computeLeaderboard({ teams: teamsLite, scores, headJudgeId: head?.id ?? null, phase });
+  const rows = computeLeaderboard({ teams: teamsLite, scores });
   const membersByTeam = Object.fromEntries(teams.map(t => [t.id, t.members]));
 
   // Per-judge totals behind each team's score, for the board's "phiếu BGK" popup.
@@ -67,7 +67,7 @@ export async function getResults() {
   // Team scores are sums, so the denominator is one judge's barem times the
   // number of judges this phase counts — not the number who happen to have
   // scored a given team. Every team shares it, so the bars stay comparable.
-  const judgeCount = countedJudges(judges.filter((j) => j.active), phase);
+  const judgeCount = judges.filter((j) => j.active).length;
   const maxTotal = Math.round(baremTotal * judgeCount * 10) / 10;
   const settingsRow = await settings();
   return {

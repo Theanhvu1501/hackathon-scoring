@@ -1,6 +1,5 @@
 export type TeamLite = { id: string; name: string; code: string; logoUrl?: string | null; tag?: string | null };
 export type ScoreLite = { judgeId: string; teamId: string; criterionId: string; value: number };
-export type Phase = 'provisional' | 'final';
 export type RankedRow = { team: TeamLite; score: number | null; judgeCount: number; rank: number; tie: boolean };
 
 export function judgeTotal(scores: ScoreLite[], teamId: string, judgeId: string): number | null {
@@ -15,10 +14,9 @@ export function judgeTotal(scores: ScoreLite[], teamId: string, judgeId: string)
 export function teamTotal(
   scores: ScoreLite[],
   teamId: string,
-  opts: { excludeJudgeId?: string | null } = {},
 ): { total: number | null; judgeCount: number } {
   const judgeIds = [...new Set(
-    scores.filter((s) => s.teamId === teamId && s.judgeId !== opts.excludeJudgeId).map((s) => s.judgeId),
+    scores.filter((s) => s.teamId === teamId).map((s) => s.judgeId),
   )];
   const totals = judgeIds
     .map((jid) => judgeTotal(scores, teamId, jid))
@@ -27,19 +25,12 @@ export function teamTotal(
   return { total: round1(totals.reduce((a, b) => a + b, 0)), judgeCount: totals.length };
 }
 
-// How many judges the phase counts — the head judge's card stays face down
-// until the final reveal. Drives the display denominator (barem × this).
-export function countedJudges(judges: { isHead: boolean }[], phase: Phase): number {
-  return judges.filter((j) => phase === 'final' || !j.isHead).length;
-}
-
 export function computeLeaderboard(input: {
-  teams: TeamLite[]; scores: ScoreLite[]; headJudgeId: string | null; phase: Phase;
+  teams: TeamLite[]; scores: ScoreLite[];
 }): RankedRow[] {
-  const { teams, scores, headJudgeId, phase } = input;
-  const exclude = phase === 'provisional' ? headJudgeId : null;
+  const { teams, scores } = input;
   const rows = teams.map((team) => {
-    const { total, judgeCount } = teamTotal(scores, team.id, { excludeJudgeId: exclude });
+    const { total, judgeCount } = teamTotal(scores, team.id);
     return { team, score: total, judgeCount, rank: 0, tie: false };
   });
   // sort: score desc (null last), then name asc
