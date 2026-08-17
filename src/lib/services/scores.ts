@@ -29,6 +29,37 @@ export async function upsertScores(
     })
   ));
 }
+export type SaveResult = { ok: true } | { ok: false; error: 'locked' };
+
+/** Một phiếu bị khoá khi giám khảo đã bấm Nộp cho đội đó. Lưu nháp không khoá. */
+export async function isCardLocked(judgeId: string, teamId: string): Promise<boolean> {
+  const n = await prisma.score.count({ where: { judgeId, teamId, submitted: true } });
+  return n > 0;
+}
+
+/**
+ * Chốt khoá nằm ở TẦNG NÀY chứ không chỉ ở giao diện: giao diện có disable nút mà
+ * API vẫn nhận ghi thì phiếu không hề bị khoá — chỉ cần một lệnh curl là sửa được.
+ */
+export async function saveScoreCard(
+  judgeId: string, teamId: string,
+  values: { criterionId: string; value: number }[], submitted: boolean,
+): Promise<SaveResult> {
+  if (await isCardLocked(judgeId, teamId)) return { ok: false, error: 'locked' };
+  await upsertScores(judgeId, teamId, values, submitted);
+  return { ok: true };
+}
+
+/** Mở khoá GIỮ NGUYÊN điểm đã nhập — chỉ bỏ cờ submitted để giám khảo sửa lại.
+ *  Trả về số dòng vừa mở khoá (0 nghĩa là phiếu vốn chưa nộp). */
+export async function unlockCard(judgeId: string, teamId: string): Promise<number> {
+  const r = await prisma.score.updateMany({
+    where: { judgeId, teamId, submitted: true },
+    data: { submitted: false },
+  });
+  return r.count;
+}
+
 // Team ids the given judge has already SUBMITTED (used to mark done teams in the judge UI).
 export async function judgeSubmittedTeamIds(judgeId: string): Promise<string[]> {
   const rows = await prisma.score.findMany({

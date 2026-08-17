@@ -2,6 +2,7 @@ import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import { prisma, disconnect } from './helpers/db';
 import {
   upsertScores, getJudgeScores, judgeProgress, judgeScoreDetail, scoreMatrix,
+  isCardLocked, saveScoreCard, unlockCard,
 } from '@/lib/services/scores';
 // Fixture dùng tên/mã cố định nên PHẢI tự dọn trước khi tạo: không dọn thì lần
 // chạy thứ hai trên cùng database sẽ đụng unique constraint của accessCode.
@@ -120,5 +121,68 @@ describe('scoreMatrix', () => {
     const teams = await prisma.team.findMany({ orderBy: { createdAt: 'asc' }, select: { id: true } });
     const m = await scoreMatrix(judgeId);
     expect(m.rows.map((r) => r.teamId)).toEqual(teams.map((t) => t.id));
+  });
+});
+
+describe('khoá phiếu chấm', () => {
+  it('nộp xong là khoá, lưu tiếp bị từ chối và điểm cũ không bị ghi đè', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST Locked', code: 'SL' } });
+
+    expect(await isCardLocked(judgeId, team.id)).toBe(false);
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 5 }], false))
+      .toEqual({ ok: true });
+    // nháp thì CHƯA khoá
+    expect(await isCardLocked(judgeId, team.id)).toBe(false);
+
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 7 }], true))
+      .toEqual({ ok: true });
+    expect(await isCardLocked(judgeId, team.id)).toBe(true);
+
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 9 }], true))
+      .toEqual({ ok: false, error: 'locked' });
+    const after = await prisma.score.findFirst({
+      where: { judgeId, teamId: team.id, criterionId: critIds[0] },
+    });
+    expect(after?.value).toBe(7);
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('mở khoá giữ nguyên điểm và cho nộp lại', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST Unlock', code: 'SX' } });
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 6 }], true);
+
+    expect(await unlockCard(judgeId, team.id)).toBeGreaterThan(0);
+    expect(await isCardLocked(judgeId, team.id)).toBe(false);
+
+    const kept = await prisma.score.findFirst({
+      where: { judgeId, teamId: team.id, criterionId: critIds[0] },
+    });
+    expect(kept?.value).toBe(6); // mở khoá KHÔNG xoá điểm
+
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 8 }], true))
+      .toEqual({ ok: true });
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('khoá là theo từng cặp (giám khảo, đội) — không lan sang đội khác', async () => {
+    const a = await prisma.team.create({ data: { name: 'ST Pair A', code: 'PA' } });
+    const b = await prisma.team.create({ data: { name: 'ST Pair B', code: 'PB' } });
+    await saveScoreCard(judgeId, a.id, [{ criterionId: critIds[0], value: 5 }], true);
+
+    expect(await isCardLocked(judgeId, a.id)).toBe(true);
+    expect(await isCardLocked(judgeId, b.id)).toBe(false);
+    expect(await saveScoreCard(judgeId, b.id, [{ criterionId: critIds[0], value: 5 }], true))
+      .toEqual({ ok: true });
+
+    await prisma.team.deleteMany({ where: { id: { in: [a.id, b.id] } } });
+  });
+
+  it('unlockCard trên phiếu chưa nộp thì không đổi gì', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST NoLock', code: 'NL' } });
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 4 }], false);
+    expect(await unlockCard(judgeId, team.id)).toBe(0);
+    await prisma.team.delete({ where: { id: team.id } });
   });
 });

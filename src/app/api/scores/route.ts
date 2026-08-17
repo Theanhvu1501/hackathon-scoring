@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { audit } from '@/lib/audit';
-import { getJudgeScores, upsertScores, validateScoreValues } from '@/lib/services/scores';
+import { getJudgeScores, isCardLocked, saveScoreCard, validateScoreValues } from '@/lib/services/scores';
 import { broadcast } from '@/lib/events';
 import { prisma } from '@/lib/db';
 
@@ -10,7 +10,10 @@ export async function GET(req: Request) {
   if (!u) return NextResponse.json({ error:'forbidden' }, { status:403 });
   const teamId = new URL(req.url).searchParams.get('teamId');
   if (!teamId) return NextResponse.json({ error:'teamId required' }, { status:400 });
-  return NextResponse.json(await getJudgeScores(u.id, teamId));
+  return NextResponse.json({
+    scores: await getJudgeScores(u.id, teamId),
+    locked: await isCardLocked(u.id, teamId),
+  });
 }
 
 export async function POST(req: Request) {
@@ -25,7 +28,13 @@ export async function POST(req: Request) {
   const validationError = validateScoreValues(values, maxById);
   if (validationError) return NextResponse.json({ error: validationError }, { status:400 });
 
-  await upsertScores(u.id, teamId, values, !!submitted);
+  const r = await saveScoreCard(u.id, teamId, values, !!submitted);
+  if (!r.ok) {
+    return NextResponse.json(
+      { error: 'Phiếu chấm đội này đã nộp và bị khoá. Liên hệ ban tổ chức nếu cần sửa.' },
+      { status: 409 },
+    );
+  }
 
   const team = await prisma.team.findUnique({ where:{ id:teamId }, select:{ name:true } });
   const total = values.reduce((a: number, v: any) => a + v.value, 0);
