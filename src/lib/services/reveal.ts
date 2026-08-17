@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { computeLeaderboard, countedJudges, ScoreLite, TeamLite } from '@/lib/scoring';
+import { computeLeaderboard, countedJudges, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
 import { broadcast } from '@/lib/events';
 
 type State = 'drafting' | 'provisional' | 'final';
@@ -31,7 +31,11 @@ export async function getResults() {
       include:{ members:{ select:{ id:true, name:true, photoUrl:true, teamRole:true } } },
     }),
     prisma.score.findMany({ select:{ judgeId:true, teamId:true, criterionId:true, value:true } }),
-    prisma.user.findMany({ where:{ role:'judge' }, select:{ id:true, isHead:true, active:true } }),
+    prisma.user.findMany({
+      where:{ role:'judge' },
+      orderBy:{ createdAt:'asc' },
+      select:{ id:true, name:true, isHead:true, active:true },
+    }),
     prisma.criterion.findMany({ select:{ maxScore:true } }),
   ]);
   // Head is looked up across ALL judges, not just active ones: a deactivated
@@ -42,7 +46,23 @@ export async function getResults() {
   const scores: ScoreLite[] = scoreRows;
   const rows = computeLeaderboard({ teams: teamsLite, scores, headJudgeId: head?.id ?? null, phase });
   const membersByTeam = Object.fromEntries(teams.map(t => [t.id, t.members]));
-  const enriched = rows.map(r => ({ ...r, team: { ...r.team, members: membersByTeam[r.team.id] ?? [] } }));
+
+  // Per-judge totals behind each team's score, for the board's "phiếu BGK" popup.
+  // Only the judges this phase counts appear, so the head judge's card stays
+  // hidden until the final reveal — the popup can never leak what the total hides.
+  // A deactivated judge is dropped unless they already scored the team, because
+  // their points are still inside the total and would otherwise not add up.
+  const counted = judges.filter(j => phase === 'final' || !j.isHead);
+  const judgeScoresFor = (teamId: string) => counted
+    .map(j => ({ judgeId: j.id, name: j.name, isHead: j.isHead, active: j.active, total: judgeTotal(scores, teamId, j.id) }))
+    .filter(j => j.active || j.total !== null)
+    .map(({ judgeId, name, isHead, total }) => ({ judgeId, name, isHead, total }));
+
+  const enriched = rows.map(r => ({
+    ...r,
+    team: { ...r.team, members: membersByTeam[r.team.id] ?? [] },
+    judgeScores: judgeScoresFor(r.team.id),
+  }));
   const baremTotal = Math.round(criteria.reduce((a,c)=>a+c.maxScore,0)*10)/10;
   // Team scores are sums, so the denominator is one judge's barem times the
   // number of judges this phase counts — not the number who happen to have

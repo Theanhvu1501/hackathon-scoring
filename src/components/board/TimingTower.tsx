@@ -1,19 +1,28 @@
 'use client';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { teamMark, teamHue } from '@/lib/team-art';
+import JudgeScoresModal, { type JudgeScore } from './JudgeScoresModal';
 
 export type BoardCriterion = { id: string; label: string; short: string; max: number; color: string };
 type Row = {
   rank: number; tie: boolean; score: number | null; judgeCount: number;
   team: { id: string; name: string; code: string; tag?: string | null; logoUrl?: string | null };
   breakdown?: { criterionId: string; value: number }[];
+  judgeScores?: JudgeScore[];
 };
 
 const FALLBACK = '#0047FF';
 
 export default function TimingTower({
-  rows, maxTotal, criteria = [],
-}: { rows: Row[]; maxTotal: number; criteria?: BoardCriterion[] }) {
+  rows, maxTotal, baremTotal = 0, criteria = [], interactive = true,
+}: {
+  rows: Row[]; maxTotal: number; baremTotal?: number;
+  criteria?: BoardCriterion[];
+  /** false on the frozen copy rendered during a screen crossfade. */
+  interactive?: boolean;
+}) {
+  const [openTeam, setOpenTeam] = useState<string | null>(null);
   const towerRef = useRef<HTMLDivElement>(null);
   const offsets = useRef<Map<string, number>>(new Map());
   const prevRank = useRef<Map<string, number>>(new Map());
@@ -64,6 +73,8 @@ export default function TimingTower({
     );
   }
 
+  const opened = openTeam ? rows.find((r) => r.team.id === openTeam) : null;
+
   return (
     <div className="pw-tower" ref={towerRef}>
       <div className="pw-head" aria-hidden>
@@ -71,7 +82,7 @@ export default function TimingTower({
         <span className="ta-r">Điểm</span><span className="ta-r">Δ</span>
       </div>
 
-      {rows.map((r) => {
+      {rows.map((r, i) => {
         const scored = r.score !== null;
         const pct = scored ? (r.score! / maxTotal) * 100 : 0;
         const markPct = leaderScore ? (leaderScore / maxTotal) * 100 : 100;
@@ -85,7 +96,7 @@ export default function TimingTower({
           <div
             key={r.team.id}
             data-team={r.team.id}
-            style={{ ['--pw-hue' as any]: teamHue(r.team.code) }}
+            style={{ ['--pw-hue' as any]: teamHue(r.team.code), ['--pw-i' as any]: Math.min(i, 18) }}
             className={
               'pw-row' +
               (scored && r.rank <= 3 ? ` is-p${r.rank}` : '') +
@@ -136,10 +147,34 @@ export default function TimingTower({
               <div className={'pw-gap' + (gap === 0 ? ' lead' : '')}>
                 {gap === null ? 'chưa chấm' : gap === 0 ? 'LEADER' : gap.toFixed(1)}
               </div>
+              {interactive && r.judgeScores && r.judgeScores.length > 0 && (
+                <button
+                  type="button"
+                  className="pw-jbtn"
+                  onClick={() => setOpenTeam(r.team.id)}
+                  aria-label={`Xem điểm ban giám khảo của ${r.team.name}`}
+                >
+                  Điểm BGK
+                </button>
+              )}
             </div>
           </div>
         );
       })}
+
+      {/* Portalled to <body>: the tower is a clipping, animated ancestor and
+          would otherwise cut the overlay off. */}
+      {opened && createPortal(
+        <JudgeScoresModal
+          team={opened.team}
+          judgeScores={opened.judgeScores ?? []}
+          baremTotal={baremTotal}
+          score={opened.score}
+          maxTotal={maxTotal}
+          onClose={() => setOpenTeam(null)}
+        />,
+        document.body,
+      )}
     </div>
   );
 }

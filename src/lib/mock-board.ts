@@ -1,7 +1,7 @@
 // Mock data for the public board, enabled with ?mock=1.
 // Produces the exact shape of /api/results plus the optional extras the
 // timing tower can render (criteria, per-team breakdown, judge roster).
-import { computeLeaderboard, countedJudges, ScoreLite, TeamLite } from '@/lib/scoring';
+import { computeLeaderboard, countedJudges, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
 
 export type BoardCriterion = { id: string; label: string; short: string; max: number; color: string };
 
@@ -112,6 +112,12 @@ export function buildMockResults(opts: MockOptions = {}) {
       })),
     },
     breakdown: r.score === null ? [] : breakdownFor(r.team.id),
+    judgeScores: MOCK_JUDGES
+      .filter((j) => phase === 'final' || !j.isHead)
+      .map((j) => ({
+        judgeId: j.id, name: j.name, isHead: j.isHead,
+        total: judgeTotal(scores, r.team.id, j.id),
+      })),
   }));
 
   return {

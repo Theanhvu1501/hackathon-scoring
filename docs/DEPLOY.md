@@ -249,14 +249,15 @@ an toàn qua mọi lần deploy.
 # từ thư mục dự án ở máy local
 rsync -az --delete \
   --exclude node_modules --exclude .next --exclude data --exclude .env \
-  --exclude tsconfig.tsbuildinfo --exclude '*.log' \
+  --exclude backups --exclude tsconfig.tsbuildinfo --exclude '*.log' \
   ./ hackathon:/opt/hackathon-scoring/
 
 ssh hackathon 'cd /opt/hackathon-scoring && docker compose up -d --build'
 ```
 
-`--exclude data` và `--exclude .env` là bắt buộc: thiếu chúng, `--delete` sẽ xoá
-database và file secret trên server.
+`--exclude data`, `--exclude .env` và `--exclude backups` là bắt buộc: thiếu
+chúng, `--delete` sẽ xoá database, file secret và toàn bộ bản `pg_dump` ở mục 7
+trên server.
 
 Code được nướng vào image lúc build, container không mount source — nên sửa file
 trên VPS rồi restart sẽ **không có tác dụng**, luôn phải `--build`.

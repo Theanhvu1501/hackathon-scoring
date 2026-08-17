@@ -6,7 +6,9 @@
    Namespaced under .pitwall so globals.css never collides with it.
    ============================================================ */
 
-.pitwall{
+/* Tokens live on their own selector because the judge-score popup is portalled
+   to <body>, outside .pitwall, and still has to resolve the same palette. */
+.pitwall,.pw-modal-wrap{
   /* brand */
   --pw-blue:#0047FF;
   --pw-cyan:#00A3FF;
@@ -40,7 +42,9 @@
   --pw-ui:Inter,system-ui,sans-serif;
 
   --pw-pad:clamp(16px,3.2vw,44px);
+}
 
+.pitwall{
   position:relative;min-height:100vh;
   font-family:var(--pw-ui);color:var(--pw-ink);
   overflow-x:hidden;
@@ -354,6 +358,101 @@
   font-size:14px;line-height:1.75;
 }
 
+/* --- "Điểm BGK" button + popup --- */
+.pw-jbtn{
+  flex:0 0 auto;
+  font-family:var(--pw-ui);font-size:11px;font-weight:600;letter-spacing:.02em;
+  color:var(--pw-muted);background:rgba(255,255,255,.9);
+  border:1px solid var(--pw-line-2);border-radius:999px;padding:5px 12px;
+  cursor:pointer;transition:color .15s,border-color .15s,background .15s;
+}
+.pw-jbtn:hover{color:var(--pw-blue);border-color:rgba(0,71,255,.5);background:#fff}
+.pw-row.is-p1 .pw-jbtn:hover{color:var(--pw-orange);border-color:rgba(249,115,34,.55)}
+
+.pw-modal-wrap{
+  position:fixed;inset:0;z-index:70;
+  display:grid;place-items:center;padding:20px;
+  font-family:var(--pw-ui);color:var(--pw-ink);
+  background:rgba(8,20,45,.5);backdrop-filter:blur(6px);
+  animation:pw-fade-in .2s ease both;
+}
+.pw-modal{
+  width:min(480px,100%);max-height:86vh;display:flex;flex-direction:column;
+  border-radius:var(--r-lg);background:#fff;
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 40px 90px -40px rgba(3,78,162,.9);
+  overflow:hidden;
+  animation:pw-pop .28s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes pw-pop{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.pw-modal-head{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 18px;border-bottom:1px solid var(--pw-line);
+}
+.pw-modal-ava{
+  width:38px;height:38px;flex:0 0 auto;border-radius:10px;overflow:hidden;
+  box-shadow:0 6px 16px -8px rgba(3,78,162,.7);
+}
+.pw-modal-ava img{width:100%;height:100%;object-fit:cover;display:block}
+.pw-modal-id{min-width:0;flex:1}
+.pw-modal-id b{
+  display:block;font-family:var(--pw-disp);font-weight:700;text-transform:uppercase;
+  font-size:17px;line-height:1.15;color:var(--pw-navy);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pw-modal-id span{
+  display:block;font-size:11px;color:var(--pw-muted-2);margin-top:3px;
+  letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+}
+.pw-modal-x{
+  flex:0 0 auto;width:30px;height:30px;border-radius:50%;
+  border:1px solid var(--pw-line-2);background:#fff;color:var(--pw-muted);
+  font-size:13px;line-height:1;cursor:pointer;transition:color .15s,border-color .15s;
+}
+.pw-modal-x:hover{color:var(--pw-navy);border-color:var(--pw-muted-2)}
+
+.pw-modal-body{padding:16px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.pw-modal-empty{font-size:13px;color:var(--pw-muted);text-align:center;padding:14px 0}
+.pw-jrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:baseline}
+.pw-jrow .nm{
+  font-size:13.5px;color:var(--pw-ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pw-jrow .role{
+  font-style:normal;margin-left:8px;
+  font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pw-orange);
+}
+.pw-jrow .val{
+  font-family:var(--pw-disp);font-weight:700;font-size:17px;line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--pw-navy);
+}
+.pw-jrow .val small{
+  font-family:var(--pw-data);font-weight:400;font-size:10.5px;color:var(--pw-muted-2);margin-left:5px;
+}
+.pw-jrow .tr{
+  grid-column:1/-1;height:5px;border-radius:999px;
+  background:rgba(11,27,61,.08);overflow:hidden;
+}
+.pw-jrow .tr i{display:block;height:100%;border-radius:999px;background:var(--grad-brand)}
+.pw-jrow.is-none .val{font-family:var(--pw-ui);font-size:12px;font-weight:500;color:var(--pw-muted-2)}
+
+.pw-modal-foot{
+  display:flex;align-items:baseline;justify-content:space-between;gap:12px;
+  padding:14px 18px;border-top:1px solid var(--pw-line);background:rgba(0,71,255,.035);
+}
+.pw-modal-foot span{
+  font-size:9.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--pw-muted-2);
+}
+.pw-modal-foot b{
+  font-family:var(--pw-disp);font-weight:700;font-size:25px;line-height:1;
+  font-variant-numeric:tabular-nums;
+  background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.pw-modal-foot b small{
+  font-family:var(--pw-data);font-weight:400;font-size:11px;margin-left:5px;
+  color:var(--pw-muted-2);-webkit-text-fill-color:var(--pw-muted-2);
+}
+
 /* ---------- Side rail ---------- */
 .pw-rail{display:flex;flex-direction:column;gap:clamp(14px,1.6vw,20px)}
 .pw-card{
@@ -431,6 +530,36 @@
 .pw-rev i:nth-child(11){animation-delay:.7s}
 .pw-rev i:nth-child(12){animation-delay:.77s}
 
+/* ---------- Screen transitions ---------- */
+/* Banner → live board is the moment everyone is looking at the screen, so the
+   two views cross-dissolve instead of cutting: the outgoing one is frozen in
+   .pw-xfade on top and fades out while the incoming one fades up underneath.
+   Only opacity is animated on these two wrappers — a transform here would turn
+   them into the containing block for .pw-ambient / .pw-login / .pw-banner and
+   shift every fixed element mid-transition. */
+.pw-enter{animation:pw-fade-in .55s ease both}
+@keyframes pw-fade-in{from{opacity:0}to{opacity:1}}
+
+.pw-xfade{
+  position:fixed;inset:0;z-index:60;overflow:hidden;pointer-events:none;
+  animation:pw-fade-out .76s ease both;
+}
+@keyframes pw-fade-out{0%{opacity:1}70%{opacity:.14}100%{opacity:0}}
+
+/* Inside the new screen the pieces rise in sequence, so the board assembles
+   itself rather than appearing all at once. */
+.pw-enter .pw-lead,
+.pw-enter .pw-tower,
+.pw-enter .pw-rail{animation:pw-rise .7s cubic-bezier(.22,1,.36,1) both}
+.pw-enter .pw-lead{animation-delay:.06s}
+.pw-enter .pw-tower{animation-delay:.14s}
+.pw-enter .pw-rail{animation-delay:.22s}
+@keyframes pw-rise{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+
+/* Rows cascade down the standings. Opacity only: the tower also runs a FLIP
+   transform animation on these nodes when the ranking reorders. */
+.pw-enter .pw-row{animation:pw-fade-in .45s ease both;animation-delay:calc(.3s + var(--pw-i,0) * 45ms)}
+
 /* ---------- Chrome ---------- */
 /* ---------- Waiting banner ---------- */
 /* Shown instead of the whole board while revealState is `drafting` and the
@@ -464,7 +593,9 @@
   color:#fff;background:var(--grad-warm);border-radius:8px;padding:8px 12px 7px;
   box-shadow:0 10px 26px -14px rgba(249,115,34,.95);
 }
-.pitwall :focus-visible{outline:3px solid var(--pw-blue);outline-offset:3px;border-radius:6px}
+.pitwall :focus-visible,.pw-modal-wrap :focus-visible{
+  outline:3px solid var(--pw-blue);outline-offset:3px;border-radius:6px;
+}
 
 /* ---------- Narrow ---------- */
 @media(max-width:720px){
@@ -492,7 +623,10 @@
 }
 
 @media(prefers-reduced-motion:reduce){
-  .pitwall *,.pitwall *::before,.pitwall *::after{
+  .pitwall,.pitwall *,.pitwall *::before,.pitwall *::after,
+  .pw-xfade,.pw-modal-wrap,.pw-modal-wrap *{
     animation:none !important;transition-duration:.01ms !important;
   }
+  /* No fade means no dissolve — the frozen copy must not sit on top opaque. */
+  .pw-xfade{display:none}
 }
