@@ -1,16 +1,14 @@
 import { prisma } from '@/lib/db';
-import { generateAccessCode } from '@/lib/access-code';
+import { uniqueCode, regenerateUserCode } from '@/lib/services/access';
 
-async function uniqueCode(): Promise<string> {
-  for (let i=0;i<10;i++){ const c=generateAccessCode(); if(!(await prisma.user.findUnique({where:{accessCode:c}}))) return c; }
-  return generateAccessCode()+Math.floor(Math.random()*9);
+export function listJudges() {
+  return prisma.user.findMany({ where:{ role:'judge' }, orderBy:{ createdAt:'asc' } });
 }
-export function listJudges() { return prisma.user.findMany({ where:{ role:'judge' }, orderBy:{ createdAt:'asc' } }); }
 export async function createJudge(data:{ name:string; isHead?:boolean }) {
   if (data.isHead) await prisma.user.updateMany({ where:{ role:'judge', isHead:true }, data:{ isHead:false } });
   return prisma.user.create({ data:{ name:data.name, role:'judge', isHead:!!data.isHead, accessCode: await uniqueCode() } });
 }
-export async function regenerateCode(id:string) { return prisma.user.update({ where:{ id }, data:{ accessCode: await uniqueCode() } }); }
+export async function regenerateCode(id:string) { return regenerateUserCode(id); }
 export function updateJudge(id:string, data:{ name?:string }) { return prisma.user.update({ where:{ id }, data }); }
 export async function setHead(id:string) {
   await prisma.user.updateMany({ where:{ role:'judge', isHead:true }, data:{ isHead:false } });

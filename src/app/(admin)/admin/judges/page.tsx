@@ -22,7 +22,8 @@ export default function Judges() {
   const [judges, setJudges] = useState<Judge[]>([]);
   const [roleFilter, setRoleFilter] = useState<'all' | 'head' | 'normal'>('all');
   const [modal, setModal] = useState<null | 'add' | Judge>(null);
-  const [form, setForm] = useState({ name: '', isHead: false });
+  const [form, setForm] = useState({ name: '', isHead: false, accessCode: '' });
+  const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [detailOf, setDetailOf] = useState<Judge | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -34,23 +35,47 @@ export default function Judges() {
   const shown = useMemo(() => judges.filter((j) =>
     roleFilter === 'all' ? true : roleFilter === 'head' ? j.isHead : !j.isHead), [judges, roleFilter]);
 
-  function openAdd() { setForm({ name: '', isHead: false }); setModal('add'); }
-  function openEdit(j: Judge) { setForm({ name: j.name, isHead: j.isHead }); setModal(j); }
+  function openAdd() { setForm({ name: '', isHead: false, accessCode: '' }); setErr(''); setModal('add'); }
+  function openEdit(j: Judge) { setForm({ name: j.name, isHead: j.isHead, accessCode: j.accessCode }); setErr(''); setModal(j); }
   async function openDetail(j: Judge) {
     setDetailOf(j); setDetail(null);
     setDetail(await fetcher('/api/judges/' + j.id + '/scores'));
   }
 
   async function save() {
-    if (!form.name) return;
-    setBusy(true);
+    if (!form.name.trim()) return;
+    const j = modal !== 'add' && modal ? (modal as Judge) : null;
+    // Đổi mã là hành động không hoàn tác được với người đang giữ mã cũ — phải hỏi.
+    if (j && form.accessCode !== j.accessCode) {
+      if (!(await confirm({
+        title: 'Đổi mã truy cập',
+        message: `Mã ${j.accessCode} sẽ hết hiệu lực ngay. Giám khảo phải dùng mã mới cho lần đăng nhập sau. Xác nhận?`,
+        confirmText: 'Đổi mã', danger: true,
+      }))) return;
+    }
+    setBusy(true); setErr('');
     try {
-      if (modal === 'add') await fetcher('/api/judges', { method: 'POST', body: JSON.stringify(form) });
-      else if (modal) await fetcher('/api/judges/' + (modal as Judge).id, { method: 'PATCH', body: JSON.stringify(form) });
+      if (modal === 'add') {
+        await fetcher('/api/judges', { method: 'POST', body: JSON.stringify({ name: form.name.trim(), isHead: form.isHead }) });
+      } else if (j) {
+        await fetcher('/api/judges/' + j.id, { method: 'PATCH', body: JSON.stringify(form) });
+      }
       setModal(null); await load();
-    } finally { setBusy(false); }
+    } catch (e: any) { setErr(e.message); }
+    finally { setBusy(false); }
   }
-  async function regen(id: string) { await fetcher('/api/judges/' + id, { method: 'POST', body: JSON.stringify({ action: 'regen' }) }); load(); }
+
+  async function regen(j: Judge) {
+    if (!(await confirm({
+      title: 'Đổi mã truy cập',
+      message: `Sinh mã mới cho "${j.name}". Mã hiện tại ${j.accessCode} hết hiệu lực ngay. Xác nhận?`,
+      confirmText: 'Đổi mã', danger: true,
+    }))) return;
+    try {
+      await fetcher('/api/judges/' + j.id, { method: 'POST', body: JSON.stringify({ action: 'regen' }) });
+      await load();
+    } catch (e: any) { setErr(e.message); }
+  }
   async function del(j: Judge) {
     if (!(await confirm({ title: 'Xoá giám khảo', message: `Xoá giám khảo "${j.name}"? Điểm đã chấm của người này sẽ bị xoá.`, confirmText: 'Xoá', danger: true }))) return;
     await fetcher('/api/judges/' + j.id, { method: 'DELETE' }); load();
@@ -65,7 +90,7 @@ export default function Judges() {
       <span style={{ whiteSpace: 'nowrap' }}>
         <button className="btn btn-sm" onClick={() => openDetail(j)}>Xem điểm</button>{' '}
         <button className="btn btn-sm" onClick={() => openEdit(j)}>Sửa</button>{' '}
-        <button className="btn btn-sm" onClick={() => regen(j.id)}>↻ Đổi mã</button>{' '}
+        <button className="btn btn-sm" onClick={() => regen(j)}>↻ Đổi mã</button>{' '}
         {!j.isHead && <button className="btn btn-sm btn-danger" onClick={() => del(j)}>Xoá</button>}
       </span>
     ) },
@@ -73,6 +98,10 @@ export default function Judges() {
 
   return (
     <>
+      {err && !modal && (
+        <div className="note" style={{ marginBottom: 14 }}><span>!</span><div>{err}</div></div>
+      )}
+
       <DataTable
         columns={columns} rows={shown} getId={(j) => j.id}
         searchPlaceholder="Tìm theo tên hoặc mã…"
@@ -96,11 +125,23 @@ export default function Judges() {
           </>}
         >
           <div className="field"><label>Tên giám khảo</label><input className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+
+          {modal !== 'add' && (
+            <div className="field">
+              <label>Mã truy cập</label>
+              <input className="input" value={form.accessCode}
+                style={{ fontFamily: 'monospace', letterSpacing: '.08em' }}
+                onChange={(e) => setForm({ ...form, accessCode: e.target.value.toUpperCase() })} />
+              <div className="hint">4–32 ký tự, chỉ A–Z, 0–9 và dấu gạch ngang. Đổi mã là mã cũ hết hiệu lực ngay.</div>
+            </div>
+          )}
+
           <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13.5, color: 'var(--text)' }}>
             <input type="checkbox" checked={form.isHead} onChange={(e) => setForm({ ...form, isHead: e.target.checked })} />
-            Đặt làm <b>Trưởng BGK</b> (lá bài quyết định — chỉ một người)
+            Đặt làm <b>Trưởng BGK</b> (chỉ một người)
           </label>
           {modal === 'add' && <div className="hint" style={{ marginTop: 10 }}>Mã truy cập sẽ tự sinh sau khi tạo.</div>}
+          {err && <div className="hint" style={{ marginTop: 10, color: 'var(--red, #c0392b)' }}>{err}</div>}
         </Modal>
       )}
 

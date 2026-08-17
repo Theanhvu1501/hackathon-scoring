@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth';
 import { audit } from '@/lib/audit';
 import { prisma } from '@/lib/db';
 import { regenerateCode, setHead, deleteJudge, updateJudge } from '@/lib/services/judges';
+import { setUserAccessCode } from '@/lib/services/access';
 
 function judgeName(id: string) {
   return prisma.user.findUnique({ where:{ id }, select:{ name:true } });
@@ -30,7 +31,14 @@ export async function POST(req: Request, { params }:{ params:{ id:string } }) {
 export async function PATCH(req: Request, { params }:{ params:{ id:string } }) {
   const u = await requireRole('admin', 'superadmin');
   if (!u) return NextResponse.json({ error:'forbidden' }, { status:403 });
-  const { name, isHead } = await req.json();
+  const { name, isHead, accessCode } = await req.json();
+  // Mã đi trước: nếu mã sai thì trả lỗi ngay, không đổi nửa vời rồi mới báo.
+  if (typeof accessCode === 'string' && accessCode.trim()) {
+    const r = await setUserAccessCode(params.id, accessCode);
+    if (!r.ok) return NextResponse.json({ error: r.error }, { status:400 });
+    const j = await judgeName(params.id);
+    await audit(u, 'judge.set_code', { entity:'judge', entityId:params.id, target:j?.name ?? params.id });
+  }
   if (typeof name === 'string' && name.trim()) {
     await updateJudge(params.id, { name: name.trim() });
     await audit(u, 'judge.update', { entity:'judge', entityId:params.id, target:name.trim() });
