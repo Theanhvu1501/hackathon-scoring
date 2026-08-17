@@ -12,12 +12,6 @@ enum Role {
   judge
 }
 
-enum RevealState {
-  drafting
-  provisional
-  final
-}
-
 model User {
   id         String   @id @default(cuid())
   name       String
@@ -30,14 +24,15 @@ model User {
 }
 
 model Team {
-  id        String   @id @default(cuid())
-  name      String
-  code      String                     // 2-3 letter badge, e.g. "EV"
-  logoUrl   String?
-  tag       String?                    // short description shown on board
-  createdAt DateTime @default(now())
-  members   Member[]
-  scores    Score[]
+  id         String    @id @default(cuid())
+  name       String
+  code       String                     // 2-3 letter badge, e.g. "EV"
+  logoUrl    String?
+  tag        String?                    // short description shown on board
+  revealedAt DateTime?                  // thời điểm được công bố trên board; null = chưa
+  createdAt  DateTime  @default(now())
+  members    Member[]
+  scores     Score[]
 }
 
 model Member {
@@ -77,11 +72,11 @@ model Score {
 }
 
 model Settings {
-  id             Int         @id @default(1)
-  revealState    RevealState @default(drafting)
-  heroImageUrl   String?     // ảnh dọc ở panel trái của board khi chạy realtime
-  bannerImageUrl String?     // ảnh ngang phủ toàn màn hình ở màn chờ (drafting)
-  updatedAt      DateTime    @updatedAt
+  id                  Int      @id @default(1)
+  judgeScoresRevealed Boolean  @default(false) // bước 2: đã lộ điểm từng BGK chưa
+  heroImageUrl        String?  // ảnh dọc ở panel trái của board khi chạy realtime
+  bannerImageUrl      String?  // ảnh ngang phủ toàn màn hình ở màn chờ
+  updatedAt           DateTime @updatedAt
 }
 
 model AuditLog {

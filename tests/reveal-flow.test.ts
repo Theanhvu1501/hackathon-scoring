@@ -1,13 +1,16 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import { execSync } from 'node:child_process';
-import { disconnect } from './helpers/db';
-import { setRevealState, getRevealState, getResults } from '@/lib/services/reveal';
+import { prisma, disconnect } from './helpers/db';
+import {
+  deriveState, getRevealStatus, revealTeam, unrevealTeam,
+  revealJudgeScores, resetReveal, getResults,
+} from '@/lib/services/reveal';
+import { anonymizeJudges } from '@/lib/judge-label';
 
 afterAll(disconnect);
-// Re-seed to a known state so this test is deterministic regardless of what
-// other integration tests did to shared DB state (e.g. head-judge flag).
-// SEED_FORCE + SEED_SCORES are required: the seed refuses to wipe a populated
-// database on its own, and this test asserts on the sample scores it creates.
+// Seed lại về trạng thái biết trước; các test tích hợp khác dùng chung DB.
+// SEED_FORCE + SEED_SCORES là bắt buộc: seed từ chối xoá một database đã có dữ
+// liệu, còn test này assert trên chính bộ điểm mẫu nó tạo ra.
 beforeAll(() => {
   execSync('npx tsx prisma/seed.ts', {
     stdio: 'ignore',
@@ -15,31 +18,91 @@ beforeAll(() => {
   });
 }, 120000);
 
+describe('anonymizeJudges', () => {
+  it('trưởng BGK thành "BGK Chính", còn lại đánh số từ 1', () => {
+    const out = anonymizeJudges([
+      { id: 'h', isHead: true }, { id: 'a', isHead: false }, { id: 'b', isHead: false },
+    ]);
+    expect(out.map((j) => j.label)).toEqual(['BGK Chính', 'BGK 1', 'BGK 2']);
+  });
+});
+
+describe('deriveState', () => {
+  it('không đội nào công bố thì waiting', () => {
+    expect(deriveState({ revealedCount: 0, judgeScoresRevealed: false })).toBe('waiting');
+  });
+  it('có đội đã công bố thì ranks', () => {
+    expect(deriveState({ revealedCount: 1, judgeScoresRevealed: false })).toBe('ranks');
+  });
+  it('cờ bước 2 bật thì judges', () => {
+    expect(deriveState({ revealedCount: 3, judgeScoresRevealed: true })).toBe('judges');
+  });
+});
+
 describe('reveal flow', () => {
-  it('every judge counts in both states — no head-judge hold left', async () => {
-    await setRevealState('provisional');
-    expect(await getRevealState()).toBe('provisional');
-    const prov = await getResults();
+  it('reset đưa board về waiting và xoá hết đội đã công bố', async () => {
+    await resetReveal();
+    const st = await getRevealStatus();
+    expect(st.state).toBe('waiting');
+    expect(st.revealedTeamIds).toEqual([]);
+    expect(st.judgeScoresRevealed).toBe(false);
+  });
 
-    await setRevealState('final');
-    const fin = await getResults();
+  it('/api/results công khai không lộ đội chưa công bố', async () => {
+    await resetReveal();
+    const empty = await getResults();
+    expect(empty.rows).toHaveLength(0);
+    expect(empty.teamCount).toBeGreaterThan(0); // vẫn biết có bao nhiêu đội
 
-    expect(prov.baremTotal).toBe(50);
-    // Cơ chế giữ kín điểm trưởng BGK đã bỏ: hai state cho cùng một bảng xếp hạng.
-    // Seed cho EV 4×46 + head 50 = 234, CV 4×47.5 + head 41 = 231.
-    expect(prov.rows[0].team.code).toBe('EV');
-    expect(fin.rows[0].team.code).toBe('EV');
+    const all = await getResults({ includeUnrevealed: true });
+    const last = all.rows[all.rows.length - 1];
+    await revealTeam(last.team.id);
 
-    // Mẫu số là barem × số giám khảo active, không phụ thuộc state.
-    expect(prov.judgeCount).toBe(5);
-    expect(prov.maxTotal).toBe(250);
-    expect(fin.judgeCount).toBe(5);
-    expect(fin.maxTotal).toBe(250);
+    const one = await getResults();
+    expect(one.rows).toHaveLength(1);
+    expect(one.state).toBe('ranks');
+    // hạng là hạng thật trên toàn bộ đội, không phải hạng 1 của nhóm đã công bố
+    expect(one.rows[0].rank).toBe(last.rank);
+    expect(one.rows[0].rank).toBeGreaterThan(1);
+  });
 
-    // Điểm là tổng, không phải trung bình.
-    expect(prov.rows.find((r) => r.team.code === 'CV')!.score).toBeCloseTo(231, 5);
-    expect(prov.rows.find((r) => r.team.code === 'EV')!.score).toBeCloseTo(234, 5);
+  it('thu hồi đưa đội đó ra khỏi board', async () => {
+    const all = await getResults({ includeUnrevealed: true });
+    const t = all.rows[0].team.id;
+    await revealTeam(t);
+    expect((await getRevealStatus()).revealedTeamIds).toContain(t);
+    await unrevealTeam(t);
+    expect((await getRevealStatus()).revealedTeamIds).not.toContain(t);
+  });
 
-    await setRevealState('drafting'); // reset
+  it('điểm BGK chỉ xuất hiện sau bước 2, và không kèm tên thật', async () => {
+    await resetReveal();
+    const all = await getResults({ includeUnrevealed: true });
+    await revealTeam(all.rows[0].team.id);
+
+    const before = await getResults();
+    expect(before.rows[0].judgeScores).toEqual([]);
+
+    await revealJudgeScores();
+    const after = await getResults();
+    expect(after.state).toBe('judges');
+    expect(after.rows[0].judgeScores.length).toBeGreaterThan(0);
+
+    const labels = after.rows[0].judgeScores.map((j) => j.label);
+    expect(labels).toContain('BGK Chính');
+    expect(labels).toContain('BGK 1');
+    // tên thật trong seed không được lọt ra
+    const names = (await prisma.user.findMany({ where: { role: 'judge' } })).map((u) => u.name);
+    const blob = JSON.stringify(after);
+    for (const n of names) expect(blob).not.toContain(n);
+
+    await resetReveal();
+  });
+
+  it('maxTotal = barem × số giám khảo active, không phụ thuộc trạng thái', async () => {
+    const r = await getResults({ includeUnrevealed: true });
+    expect(r.baremTotal).toBe(50);
+    expect(r.judgeCount).toBe(5);
+    expect(r.maxTotal).toBe(250);
   });
 });
