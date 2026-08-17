@@ -7,6 +7,7 @@ const prisma = new PrismaClient();
 
 // Human-readable access codes. The defaults are public in this repo, so every
 // deployment must override them via env (see .env.example).
+const SUPER_CODE = process.env.SUPERADMIN_ACCESS_CODE || 'SUPER-2026';
 const ADMIN_CODE = process.env.ADMIN_ACCESS_CODE || 'ADMIN-2026';
 const HEAD_CODE = process.env.HEAD_ACCESS_CODE || 'HEAD-2026';
 const JUDGE_CODES = (process.env.JUDGE_ACCESS_CODES || 'BGK2-2026,BGK3-2026,BGK4-2026,BGK5-2026')
@@ -63,6 +64,7 @@ async function main() {
   // chỉ cần tắt cờ bước 2.
   await prisma.settings.upsert({ where:{ id:1 }, update:{ judgeScoresRevealed:false }, create:{ id:1, judgeScoresRevealed:false } });
 
+  const superadmin = await prisma.user.create({ data:{ name:'Super Admin', role:'superadmin', accessCode: SUPER_CODE } });
   const admin = await prisma.user.create({ data:{ name:'Ban tổ chức', role:'admin', accessCode: ADMIN_CODE } });
   const judges = [];
   for (const j of JUDGES) judges.push(await prisma.user.create({ data:{ name:j.name, role:'judge', isHead:j.isHead, accessCode: j.code } }));
@@ -99,6 +101,7 @@ async function main() {
   }
 
   console.log(`Seed done${WITH_SCORES ? ' (kèm điểm mẫu)' : ' (không có điểm mẫu)'}.`);
+  console.log('SUPERADMIN access code:', superadmin.accessCode);
   console.log('ADMIN access code:', admin.accessCode);
   for (const j of judges) console.log(`JUDGE ${j.isHead?'(HEAD)':'      '} ${j.name}: ${(await prisma.user.findUnique({where:{id:j.id}}))!.accessCode}`);
 }

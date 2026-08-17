@@ -113,6 +113,29 @@ docker compose exec -e SEED_FORCE=1 app npx tsx prisma/seed.ts
 Với `NODE_ENV=production`, seed tạo team/BGK/tiêu chí nhưng **không** tạo điểm mẫu.
 Muốn có điểm mẫu để demo: thêm `-e SEED_SCORES=1`.
 
+### 4b. Tài khoản quản trị trên bản đang chạy — `npm run accounts`
+
+Khi nâng cấp một deployment **đã có dữ liệu thật**, không được chạy seed. Dùng
+script riêng, nó chỉ upsert hai tài khoản quản trị và không đụng tới đội / thành
+viên / tiêu chí / điểm:
+
+```bash
+docker compose exec app npx prisma migrate deploy
+docker compose exec app npm run accounts
+```
+
+Script đọc `SUPERADMIN_ACCESS_CODE` và `ADMIN_ACCESS_CODE` từ `.env`, chạy nhiều
+lần vẫn an toàn, và **dừng lại** nếu mã bạn đặt đang được một giám khảo dùng
+(thay vì cướp mã làm người ta không đăng nhập được).
+
+Hai role khác nhau ở đúng hai điểm:
+
+| | `superadmin` | `admin` (khách hàng) |
+|---|---|---|
+| Vận hành: đội, BGK, barem, công bố, mở khoá phiếu | có | có |
+| Nhật ký thao tác `/admin/audit` | có | **không** |
+| Quản lý tài khoản admin `/admin/accounts` | có | **không** |
+
 ## 5. Reverse proxy + HTTPS (bắt buộc)
 
 Cookie phiên đăng nhập được set `secure: true` khi `NODE_ENV=production`
