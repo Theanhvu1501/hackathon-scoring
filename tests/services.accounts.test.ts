@@ -31,8 +31,16 @@ describe('accounts service', () => {
   });
 
   it('không cho xoá hay khoá superadmin active cuối cùng', async () => {
-    // dọn sạch superadmin để test đúng ca "người cuối cùng"
-    await prisma.user.deleteMany({ where: { role: 'superadmin' } });
+    // Để dựng ca "người cuối cùng" thì không được còn superadmin active nào khác.
+    // TẠM tắt active của các superadmin đang có rồi bật lại ở cuối — xoá sạch
+    // họ sẽ làm database dev không còn ai đăng nhập được vào trang tài khoản.
+    const existing = await prisma.user.findMany({
+      where: { role: 'superadmin', active: true }, select: { id: true },
+    });
+    await prisma.user.updateMany({
+      where: { id: { in: existing.map((e) => e.id) } }, data: { active: false },
+    });
+
     const s = await createAccount({ name: 'Super duy nhất', role: 'superadmin' });
 
     expect(await checkAccountMutable(s.id, 'nguoi-khac', { deleting: true })).toMatch(/ít nhất một Super Admin/);
@@ -48,6 +56,10 @@ describe('accounts service', () => {
     expect(await checkAccountMutable(s.id, 'nguoi-khac', { deleting: true })).toMatch(/ít nhất một Super Admin/);
 
     await prisma.user.deleteMany({ where: { id: { in: [s.id, s2.id] } } });
+    // trả lại trạng thái như lúc vào
+    await prisma.user.updateMany({
+      where: { id: { in: existing.map((e) => e.id) } }, data: { active: true },
+    });
   });
 
   it('checkAccountMutable báo lỗi khi không tìm thấy tài khoản', async () => {
