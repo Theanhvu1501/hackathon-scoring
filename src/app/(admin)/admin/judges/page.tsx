@@ -76,6 +76,23 @@ export default function Judges() {
       await load();
     } catch (e: any) { setErr(e.message); }
   }
+  async function unlock(teamId: string, teamName: string) {
+    if (!detailOf) return;
+    if (!(await confirm({
+      title: 'Mở khoá phiếu chấm',
+      message: `Mở khoá phiếu của "${detailOf.name}" cho đội "${teamName}". Điểm đã nhập giữ nguyên, `
+             + `giám khảo sẽ sửa và nộp lại được. Thao tác này được ghi vào nhật ký.`,
+      confirmText: 'Mở khoá', danger: true,
+    }))) return;
+    setErr('');
+    try {
+      await fetcher('/api/judges/' + detailOf.id + '/unlock', {
+        method: 'POST', body: JSON.stringify({ teamId }),
+      });
+      setDetail(await fetcher('/api/judges/' + detailOf.id + '/scores'));
+    } catch (e: any) { setErr(e.message); }
+  }
+
   async function del(j: Judge) {
     if (!(await confirm({ title: 'Xoá giám khảo', message: `Xoá giám khảo "${j.name}"? Điểm đã chấm của người này sẽ bị xoá.`, confirmText: 'Xoá', danger: true }))) return;
     await fetcher('/api/judges/' + j.id, { method: 'DELETE' }); load();
@@ -165,6 +182,7 @@ export default function Judges() {
                     ))}
                     <th style={{ textAlign: 'right' }}>Tổng</th>
                     <th style={{ textAlign: 'right' }}>Trạng thái</th>
+                    <th style={{ textAlign: 'right' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,10 +202,15 @@ export default function Judges() {
                           {STATUS_LABEL[r.status]}
                         </span>
                       </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {r.status === 'submitted'
+                          ? <button className="btn btn-sm" onClick={() => unlock(r.teamId, r.teamName)}>Mở khoá</button>
+                          : <span style={{ color: 'var(--muted-2)' }}>—</span>}
+                      </td>
                     </tr>
                   ))}
                   {detail.rows.length === 0 && (
-                    <tr><td colSpan={detail.criteria.length + 3} style={{ color: 'var(--muted-2)' }}>Chưa có đội nào.</td></tr>
+                    <tr><td colSpan={detail.criteria.length + 4} style={{ color: 'var(--muted-2)' }}>Chưa có đội nào.</td></tr>
                   )}
                 </tbody>
               </table>
