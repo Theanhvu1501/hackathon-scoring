@@ -2,8 +2,7 @@ import { describe, it, expect, afterAll, beforeAll } from 'vitest';
 import { execSync } from 'node:child_process';
 import { prisma, disconnect } from './helpers/db';
 import {
-  deriveState, getRevealStatus, revealTeam, unrevealTeam,
-  revealJudgeScores, resetReveal, getResults,
+  deriveState, getRevealStatus, revealTeam, unrevealTeam, resetReveal, getResults,
 } from '@/lib/services/reveal';
 import { anonymizeJudges } from '@/lib/judge-label';
 
@@ -29,13 +28,10 @@ describe('anonymizeJudges', () => {
 
 describe('deriveState', () => {
   it('không đội nào công bố thì waiting', () => {
-    expect(deriveState({ revealedCount: 0, judgeScoresRevealed: false })).toBe('waiting');
+    expect(deriveState({ revealedCount: 0 })).toBe('waiting');
   });
-  it('có đội đã công bố thì ranks', () => {
-    expect(deriveState({ revealedCount: 1, judgeScoresRevealed: false })).toBe('ranks');
-  });
-  it('cờ bước 2 bật thì judges', () => {
-    expect(deriveState({ revealedCount: 3, judgeScoresRevealed: true })).toBe('judges');
+  it('có đội đã công bố thì revealing', () => {
+    expect(deriveState({ revealedCount: 1 })).toBe('revealing');
   });
 });
 
@@ -45,7 +41,7 @@ describe('reveal flow', () => {
     const st = await getRevealStatus();
     expect(st.state).toBe('waiting');
     expect(st.revealedTeamIds).toEqual([]);
-    expect(st.judgeScoresRevealed).toBe(false);
+    expect(st.currentTeamId).toBeNull();
   });
 
   it('/api/results công khai không lộ đội chưa công bố', async () => {
@@ -60,10 +56,33 @@ describe('reveal flow', () => {
 
     const one = await getResults();
     expect(one.rows).toHaveLength(1);
-    expect(one.state).toBe('ranks');
+    expect(one.state).toBe('revealing');
+    expect(one.currentTeamId).toBe(last.team.id);
     // hạng là hạng thật trên toàn bộ đội, không phải hạng 1 của nhóm đã công bố
     expect(one.rows[0].rank).toBe(last.rank);
     expect(one.rows[0].rank).toBeGreaterThan(1);
+  });
+
+  it('đội đang chiếu là đội công bố GẦN NHẤT, không phải đội hạng cao nhất', async () => {
+    await resetReveal();
+    const all = await getResults({ includeUnrevealed: true });
+    const worst = all.rows[all.rows.length - 1];
+    const best = all.rows[0];
+
+    // công bố hạng bét trước, rồi hạng nhất — board phải đang chiếu hạng nhất
+    await revealTeam(worst.team.id);
+    expect((await getRevealStatus()).currentTeamId).toBe(worst.team.id);
+    await revealTeam(best.team.id);
+    expect((await getRevealStatus()).currentTeamId).toBe(best.team.id);
+
+    // công bố lại đội hạng bét thì nó thành đội đang chiếu, dù hạng thấp hơn
+    await revealTeam(worst.team.id);
+    const st = await getRevealStatus();
+    expect(st.currentTeamId).toBe(worst.team.id);
+    expect(st.currentTeamName).toBe(worst.team.name);
+    expect(st.revealedTeamIds).toHaveLength(2);
+
+    await resetReveal();
   });
 
   it('thu hồi đưa đội đó ra khỏi board', async () => {
@@ -75,17 +94,13 @@ describe('reveal flow', () => {
     expect((await getRevealStatus()).revealedTeamIds).not.toContain(t);
   });
 
-  it('điểm BGK chỉ xuất hiện sau bước 2, và không kèm tên thật', async () => {
+  it('điểm BGK đi cùng thứ hạng và không kèm tên thật', async () => {
     await resetReveal();
     const all = await getResults({ includeUnrevealed: true });
     await revealTeam(all.rows[0].team.id);
 
-    const before = await getResults();
-    expect(before.rows[0].judgeScores).toEqual([]);
-
-    await revealJudgeScores();
     const after = await getResults();
-    expect(after.state).toBe('judges');
+    expect(after.state).toBe('revealing');
     expect(after.rows[0].judgeScores.length).toBeGreaterThan(0);
 
     const labels = after.rows[0].judgeScores.map((j) => j.label);

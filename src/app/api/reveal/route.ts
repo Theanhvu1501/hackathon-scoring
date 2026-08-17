@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { audit } from '@/lib/audit';
 import { prisma } from '@/lib/db';
-import {
-  getRevealStatus, revealTeam, unrevealTeam, revealJudgeScores, resetReveal,
-} from '@/lib/services/reveal';
+import { getRevealStatus, revealTeam, unrevealTeam, resetReveal } from '@/lib/services/reveal';
 
 export async function GET() { return NextResponse.json(await getRevealStatus()); }
 
@@ -22,11 +20,6 @@ export async function POST(req: Request) {
     await audit(u, action === 'revealTeam' ? 'reveal.team' : 'reveal.unteam', {
       entity: 'reveal', entityId: teamId, target: team?.name ?? teamId,
     });
-    return NextResponse.json({ ok: true, ...(await getRevealStatus()) });
-  }
-  if (action === 'revealJudges') {
-    await revealJudgeScores();
-    await audit(u, 'reveal.judges', { entity: 'reveal' });
     return NextResponse.json({ ok: true, ...(await getRevealStatus()) });
   }
   if (action === 'reset') {

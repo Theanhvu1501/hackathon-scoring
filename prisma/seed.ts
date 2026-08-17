@@ -60,9 +60,8 @@ async function main() {
   await prisma.criterion.deleteMany();
   await prisma.team.deleteMany();
   await prisma.user.deleteMany();
-  // Board về màn chờ. Đội vừa bị deleteMany ở trên nên revealedAt tự sạch;
-  // chỉ cần tắt cờ bước 2.
-  await prisma.settings.upsert({ where:{ id:1 }, update:{ judgeScoresRevealed:false }, create:{ id:1, judgeScoresRevealed:false } });
+  // Board về màn chờ — đội vừa bị deleteMany ở trên nên revealedAt tự sạch.
+  await prisma.settings.upsert({ where:{ id:1 }, update:{}, create:{ id:1 } });
 
   const superadmin = await prisma.user.create({ data:{ name:'Super Admin', role:'superadmin', accessCode: SUPER_CODE } });
   const admin = await prisma.user.create({ data:{ name:'Ban tổ chức', role:'admin', accessCode: ADMIN_CODE } });

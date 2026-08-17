@@ -52,14 +52,18 @@ function wobble(teamIndex: number, critIndex: number, tick: number): number {
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 export type MockOptions = {
-  state?: 'waiting' | 'ranks' | 'judges';
+  state?: 'waiting' | 'revealing';
+  /** Đã công bố mấy đội, tính từ hạng bét lên. Đội đang chiếu là đội tốt nhất
+   *  trong số đã công bố — giống hệt cách board thật chọn currentTeamId. */
+  revealedCount?: number;
   tick?: number;
   /** Teams still awaiting any score — they render as "chưa chấm". */
   unscoredCount?: number;
 };
 
 export function buildMockResults(opts: MockOptions = {}) {
-  const { state = 'ranks', tick = 0, unscoredCount = state === 'judges' ? 0 : 1 } = opts;
+  const { state = 'revealing', tick = 0, unscoredCount = 0 } = opts;
+  const revealedCount = opts.revealedCount ?? (state === 'waiting' ? 0 : 9);
 
   const teams: TeamLite[] = SEEDS.map((s, i) => ({
     id: 't' + i, name: s.name, code: s.code, tag: s.tag, logoUrl: null,
@@ -74,7 +78,6 @@ export function buildMockResults(opts: MockOptions = {}) {
     if (ti >= scored) return;
     activeJudges.forEach((judge, ji) => {
       // Late judges lag on the tail of the field — a real board is never fully filled.
-      if (state !== 'judges' && ji === activeJudges.length - 1 && ti >= scored - 2) return;
       MOCK_CRITERIA.forEach((crit, ci) => {
         const spread = ((ji - activeJudges.length / 2) * 0.45) + wobble(ti, ci, tick) * 0.55;
         scores.push({
@@ -86,54 +89,32 @@ export function buildMockResults(opts: MockOptions = {}) {
   });
 
   const ranked = computeLeaderboard({ teams, scores });
-
-  // Sum each criterion across every judge, so the segments add up to exactly the
-  // team total the tower prints next to them.
-  const breakdownFor = (teamId: string) =>
-    MOCK_CRITERIA.map((crit) => {
-      const vals = scores.filter((s) => s.teamId === teamId && s.criterionId === crit.id);
-      if (!vals.length) return { criterionId: crit.id, value: 0 };
-      return {
-        criterionId: crit.id,
-        value: Math.round(vals.reduce((a, s) => a + s.value, 0) * 10) / 10,
-      };
-    });
+  const labelled = anonymizeJudges(MOCK_JUDGES);
 
   const rows = ranked.map((r) => ({
     ...r,
-    team: {
-      ...r.team,
-      members: SEEDS[Number(r.team.id.slice(1))].members.map((name, mi) => ({
-        id: r.team.id + '-m' + mi, name, photoUrl: null, teamRole: mi === 0 ? 'Trưởng nhóm' : null,
-      })),
-    },
+    team: { ...r.team, members: [] },
     revealed: true,
-    breakdown: r.score === null ? [] : breakdownFor(r.team.id),
-    judgeScores: state === 'judges'
-      ? anonymizeJudges(MOCK_JUDGES).map((j) => ({
-          judgeId: j.id, label: j.label, isHead: j.isHead,
-          total: judgeTotal(scores, r.team.id, j.id),
-        }))
-      : [],
+    judgeScores: labelled.map((j) => ({
+      judgeId: j.id, label: j.label, isHead: j.isHead,
+      total: judgeTotal(scores, r.team.id, j.id),
+    })),
   }));
 
-  const labelledJudges = anonymizeJudges(MOCK_JUDGES);
+  // Công bố từ hạng bét lên: nhóm đã công bố là K đội cuối bảng.
+  const k = Math.max(0, Math.min(revealedCount, rows.length));
+  const revealedRows = state === 'waiting' ? [] : rows.slice(rows.length - k);
+  const current = revealedRows.length ? revealedRows[0] : null;
 
   return {
     state,
-    // Ở waiting thì board chưa công bố đội nào — mock phải khớp API thật.
-    rows: state === 'waiting' ? [] : rows,
-    revealedTeamIds: state === 'waiting' ? [] : rows.map((r) => r.team.id),
+    rows: revealedRows,
+    revealedTeamIds: revealedRows.map((r) => r.team.id),
+    currentTeamId: current?.team.id ?? null,
     baremTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0),
     maxTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0) * MOCK_JUDGES.length,
     judgeCount: MOCK_JUDGES.length,
-    heroImageUrl: null,
     bannerImageUrl: null,
-    criteria: MOCK_CRITERIA,
-    judges: labelledJudges.map((j) => ({
-      id: j.id, label: j.label, isHead: j.isHead,
-      submitted: new Set(scores.filter((s) => s.judgeId === j.id).map((s) => s.teamId)).size,
-    })),
     teamCount: SEEDS.length,
     mock: true,
   };

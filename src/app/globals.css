@@ -572,3 +572,31 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
   background:linear-gradient(160deg,rgba(7,27,64,.4) 0%,rgba(10,31,72,.62) 55%,rgba(4,18,46,.9) 100%)}
 .board-hero.has-photo .hero-canvas{opacity:.4}
 .board-hero.has-photo .hero-car{display:none}
+
+/* ---------- Trạng thái chờ ----------
+   Ba thứ cho mọi thao tác có gọi mạng: nút bị vô hiệu phải TRÔNG như vậy,
+   nút đang chạy có con quay, và bảng đang tải hiện xương thay vì hiện dòng
+   "không có dữ liệu" (dòng đó đọc như một lỗi). */
+.btn:disabled,.btn[aria-busy="true"]{opacity:.5;cursor:not-allowed}
+.btn:disabled:hover{border-color:var(--line-strong);background:#fff}
+.btn-primary:disabled:hover{background:var(--orange)}
+.btn-danger:disabled:hover{background:var(--red)}
+
+.spin{
+  width:12px;height:12px;flex:0 0 auto;border-radius:50%;
+  border:2px solid currentColor;border-right-color:transparent;
+  animation:spin .6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.skel{
+  display:block;height:12px;border-radius:6px;
+  background:linear-gradient(90deg,rgba(23,54,120,.07) 25%,rgba(23,54,120,.13) 37%,rgba(23,54,120,.07) 63%);
+  background-size:400% 100%;
+  animation:skel 1.3s ease-in-out infinite;
+}
+@keyframes skel{0%{background-position:100% 50%}100%{background-position:0 50%}}
+
+@media(prefers-reduced-motion:reduce){
+  .spin,.skel{animation-duration:.01ms;animation-iteration-count:1}
+}

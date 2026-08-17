@@ -73,11 +73,9 @@ model Score {
 }
 
 model Settings {
-  id                  Int      @id @default(1)
-  judgeScoresRevealed Boolean  @default(false) // bước 2: đã lộ điểm từng BGK chưa
-  heroImageUrl        String?  // ảnh dọc ở panel trái của board khi chạy realtime
-  bannerImageUrl      String?  // ảnh ngang phủ toàn màn hình ở màn chờ
-  updatedAt           DateTime @updatedAt
+  id             Int      @id @default(1)
+  bannerImageUrl String?  // ảnh ngang phủ toàn màn hình ở màn chờ
+  updatedAt      DateTime @updatedAt
 }
 
 model AuditLog {

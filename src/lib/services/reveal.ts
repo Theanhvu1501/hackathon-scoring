@@ -3,7 +3,7 @@ import { computeLeaderboard, judgeTotal, ScoreLite, TeamLite } from '@/lib/scori
 import { anonymizeJudges } from '@/lib/judge-label';
 import { broadcast } from '@/lib/events';
 
-export type BoardState = 'waiting' | 'ranks' | 'judges';
+export type BoardState = 'waiting' | 'revealing';
 
 async function settings() {
   return prisma.settings.upsert({ where: { id: 1 }, update: {}, create: { id: 1 } });
@@ -11,24 +11,24 @@ async function settings() {
 
 /** Trạng thái board suy ra từ dữ liệu, không lưu cột riêng — hai nguồn chân lý
  *  sẽ lệch nhau ngay lần đầu ai đó thu hồi một đội. */
-export function deriveState(input: { revealedCount: number; judgeScoresRevealed: boolean }): BoardState {
-  if (input.judgeScoresRevealed) return 'judges';
-  return input.revealedCount > 0 ? 'ranks' : 'waiting';
+export function deriveState(input: { revealedCount: number }): BoardState {
+  return input.revealedCount > 0 ? 'revealing' : 'waiting';
 }
 
 export async function getRevealStatus() {
-  const [s, revealed] = await Promise.all([
-    settings(),
-    prisma.team.findMany({
-      where: { revealedAt: { not: null } },
-      select: { id: true },
-      orderBy: { revealedAt: 'asc' },
-    }),
-  ]);
+  // Board chỉ chiếu MỘT đội: đội được công bố gần nhất, và giữ nguyên đó cho tới
+  // lần công bố tiếp theo. Nên thứ tự revealedAt là dữ liệu, không phải trang trí.
+  const revealed = await prisma.team.findMany({
+    where: { revealedAt: { not: null } },
+    select: { id: true, name: true },
+    orderBy: { revealedAt: 'asc' },
+  });
+  const current = revealed.length ? revealed[revealed.length - 1] : null;
   return {
-    state: deriveState({ revealedCount: revealed.length, judgeScoresRevealed: s.judgeScoresRevealed }),
+    state: deriveState({ revealedCount: revealed.length }),
     revealedTeamIds: revealed.map((t) => t.id),
-    judgeScoresRevealed: s.judgeScoresRevealed,
+    currentTeamId: current?.id ?? null,
+    currentTeamName: current?.name ?? null,
   };
 }
 
@@ -42,32 +42,11 @@ export async function unrevealTeam(teamId: string) {
   broadcast('reveal', { teamId, undo: true });
 }
 
-export async function revealJudgeScores() {
-  await prisma.settings.upsert({
-    where: { id: 1 },
-    update: { judgeScoresRevealed: true },
-    create: { id: 1, judgeScoresRevealed: true },
-  });
-  broadcast('reveal', { judges: true });
-}
-
 export async function resetReveal() {
-  await prisma.$transaction([
-    prisma.team.updateMany({ where: { revealedAt: { not: null } }, data: { revealedAt: null } }),
-    prisma.settings.upsert({
-      where: { id: 1 },
-      update: { judgeScoresRevealed: false },
-      create: { id: 1, judgeScoresRevealed: false },
-    }),
-  ]);
+  await prisma.team.updateMany({ where: { revealedAt: { not: null } }, data: { revealedAt: null } });
   broadcast('reveal', { reset: true });
 }
 
-export async function getHeroImage(): Promise<string | null> { return (await settings()).heroImageUrl ?? null; }
-export async function setHeroImage(url: string | null) {
-  await prisma.settings.upsert({ where: { id: 1 }, update: { heroImageUrl: url }, create: { id: 1, heroImageUrl: url } });
-  broadcast('reveal', { hero: true });
-}
 export async function getBannerImage(): Promise<string | null> { return (await settings()).bannerImageUrl ?? null; }
 export async function setBannerImage(url: string | null) {
   await prisma.settings.upsert({ where: { id: 1 }, update: { bannerImageUrl: url }, create: { id: 1, bannerImageUrl: url } });
@@ -95,8 +74,12 @@ export async function getResults(opts: { includeUnrevealed?: boolean } = {}) {
     settings(),
   ]);
 
-  const revealedIds = teams.filter((t) => t.revealedAt !== null).map((t) => t.id);
-  const state = deriveState({ revealedCount: revealedIds.length, judgeScoresRevealed: s.judgeScoresRevealed });
+  const revealedInOrder = teams
+    .filter((t) => t.revealedAt !== null)
+    .sort((a, b) => a.revealedAt!.getTime() - b.revealedAt!.getTime());
+  const revealedIds = revealedInOrder.map((t) => t.id);
+  const currentTeamId = revealedIds.length ? revealedIds[revealedIds.length - 1] : null;
+  const state = deriveState({ revealedCount: revealedIds.length });
 
   const teamsLite: TeamLite[] = teams.map((t) => ({
     id: t.id, name: t.name, code: t.code, logoUrl: t.logoUrl, tag: t.tag,
@@ -107,19 +90,17 @@ export async function getResults(opts: { includeUnrevealed?: boolean } = {}) {
   const membersByTeam = Object.fromEntries(teams.map((t) => [t.id, t.members]));
 
   const labelled = anonymizeJudges(judges);
-  const showJudges = state === 'judges' || !!opts.includeUnrevealed;
-  // Giám khảo bị tắt vẫn hiện nếu đã chấm, vì điểm của họ nằm trong tổng và
-  // nếu bỏ đi thì các thẻ không cộng lại thành tổng nữa.
-  const judgeScoresFor = (teamId: string) => {
-    if (!showJudges) return [];
-    return labelled
-      .map((j) => ({
-        judgeId: j.id, label: j.label, isHead: j.isHead, active: j.active,
-        total: judgeTotal(scores, teamId, j.id),
-      }))
-      .filter((j) => j.active || j.total !== null)
-      .map(({ judgeId, label, isHead, total }) => ({ judgeId, label, isHead, total }));
-  };
+  // Điểm từng BGK đi CÙNG lúc với thứ hạng — không còn bước công bố riêng. Với
+  // đội chưa công bố thì cả hàng đã bị lọc khỏi API công khai, nên không rò rỉ.
+  // Giám khảo bị tắt vẫn hiện nếu đã chấm, vì điểm của họ nằm trong tổng và bỏ
+  // đi thì các thẻ không cộng lại thành tổng nữa.
+  const judgeScoresFor = (teamId: string) => labelled
+    .map((j) => ({
+      judgeId: j.id, label: j.label, isHead: j.isHead, active: j.active,
+      total: judgeTotal(scores, teamId, j.id),
+    }))
+    .filter((j) => j.active || j.total !== null)
+    .map(({ judgeId, label, isHead, total }) => ({ judgeId, label, isHead, total }));
 
   const rows = ranked
     .map((r) => ({
@@ -140,11 +121,11 @@ export async function getResults(opts: { includeUnrevealed?: boolean } = {}) {
     state,
     rows,
     revealedTeamIds: revealedIds,
+    currentTeamId,
     teamCount: teams.length,
     baremTotal,
     maxTotal,
     judgeCount,
-    heroImageUrl: s.heroImageUrl ?? null,
     bannerImageUrl: s.bannerImageUrl ?? null,
   };
 }

@@ -3,24 +3,21 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import Confetti from '@/components/Confetti';
-import TimingTower from '@/components/board/TimingTower';
-import LeaderBand from '@/components/board/LeaderBand';
-import BoardRail from '@/components/board/BoardRail';
 import AmbientNet from '@/components/board/AmbientNet';
-import SpotlightReveal from '@/components/board/SpotlightReveal';
+import RevealStage from '@/components/board/RevealStage';
 import { buildMockResults } from '@/lib/mock-board';
 
 const EVENT = 'Automotive Hackathon 2026';
-const SESSION = 'Vòng chung kết · Bảng điểm trực tiếp';
+const SESSION = 'Vòng chung kết · Công bố kết quả';
 const TAGLINE = 'SHAPE THE AI-DEFINED MOBILITY ERA';
 
-export type MockMode = 'ranks' | 'judges' | 'wait' | null;
+export type MockMode = 'reveal' | 'champion' | 'wait' | null;
 
-/** Which of the three full-screen views the current payload maps to. */
-type Screen = 'banner' | 'wait' | 'board';
+/** Ba màn hình toàn khung. `stage` là đội đang được công bố. */
+type Screen = 'banner' | 'wait' | 'stage';
 function screenOf(d: any): Screen {
   if (!d || d.state === 'waiting') return d?.bannerImageUrl ? 'banner' : 'wait';
-  return 'board';
+  return 'stage';
 }
 
 // The outgoing view lingers this long as a fading overlay. Must stay above the
@@ -35,9 +32,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
   // Seeded from the server render, so the very first paint is already the real
   // screen — no "đang kết nối" flash before the banner appears.
   const [data, setData] = useState<any>(initial);
-  const [clock, setClock] = useState(0);
   const [celebrate, setCelebrate] = useState(0);
-  const [spotlightId, setSpotlightId] = useState<string | null>(null);
 
   // Live data
   useEffect(() => {
@@ -49,66 +44,36 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
     };
     load();
     const es = new EventSource('/api/stream');
-    // Spotlight bám vào SỰ KIỆN, không phải so sánh state giữa hai lần fetch:
-    // F5 lại trang board sau khi đã công bố sẽ không chiếu lại màn hình của đội
-    // công bố lúc trước.
-    es.addEventListener('reveal', (e: MessageEvent) => {
-      let p: any = {};
-      try { p = JSON.parse(e.data); } catch { /* payload rỗng */ }
-      if (p.teamId && !p.undo) setSpotlightId(p.teamId);
-      if (p.reset || p.undo) setSpotlightId(null);
-      if (p.judges) setCelebrate((c) => c + 1);
-      load();
-    });
+    es.addEventListener('reveal', load);
     es.addEventListener('update', load);
     return () => { alive = false; es.close(); };
   }, [mock]);
 
-  // Mock data — scores drift every few seconds so reordering is visible.
-  useEffect(() => {
-    if (!mock) return;
-    const state = mock === 'wait' ? 'waiting' : mock;
-    if (state === 'judges') setCelebrate((c) => c + 1);
-    if (state !== 'ranks') return;
-    let tick = 0;
-    const id = setInterval(() => setData(buildMockResults({ state, tick: ++tick })), 4000);
-    return () => clearInterval(id);
-  }, [mock]);
-
-  // Session clock in the status strip.
-  useEffect(() => {
-    const id = setInterval(() => setClock((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  // Keep the celebration going while the judge scores are up.
-  useEffect(() => {
-    if (data?.state !== 'judges') return;
-    const id = setInterval(() => setCelebrate((c) => c + 1), 9000);
-    return () => clearInterval(id);
-  }, [data?.state]);
-
   // ---- Screen crossfade -------------------------------------------------
-  // Going from the banner to the live board is the moment the room is watching,
-  // so the swap must not be a cut. The outgoing view is frozen (its own data
-  // snapshot) and fades out on top while the new one fades up underneath.
+  // Đổi đội đang chiếu cũng là một lần đổi màn: bản cũ đóng băng và mờ dần trên
+  // bản mới, nên không bao giờ có cú cắt giữa lúc cả phòng đang nhìn.
   const screen = screenOf(data);
+  const stageKey = screen === 'stage' ? data?.currentTeamId ?? '' : screen;
   const [leaving, setLeaving] = useState<{ screen: Screen; data: any } | null>(null);
+  const lastKey = useRef<string>(stageKey);
   const lastScreen = useRef<Screen>(screen);
   const lastData = useRef<any>(data);
 
   useEffect(() => {
-    if (lastScreen.current === screen) { lastData.current = data; return; }
+    if (lastKey.current === stageKey) { lastData.current = data; return; }
     setLeaving({ screen: lastScreen.current, data: lastData.current });
+    lastKey.current = stageKey;
     lastScreen.current = screen;
     lastData.current = data;
     const id = setTimeout(() => setLeaving(null), XFADE_MS);
     return () => clearTimeout(id);
-  }, [screen, data]);
+  }, [stageKey, screen, data]);
 
-  const mm = String(Math.floor(clock / 60)).padStart(2, '0');
-  const ss = String(clock % 60).padStart(2, '0');
-  const clockText = `${mm}:${ss}`;
+  // Hạng nhất là lúc duy nhất bắn confetti — bắn ở mọi đội thì nó thành nền.
+  const currentRow = data?.rows?.find((r: any) => r.team.id === data.currentTeamId) ?? null;
+  useEffect(() => {
+    if (currentRow?.rank === 1) setCelebrate((c) => c + 1);
+  }, [currentRow?.team.id, currentRow?.rank]);
 
   const view = (s: Screen, d: any, entering: boolean) => {
     const enter = entering ? ' pw-enter' : '';
@@ -131,7 +96,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
       return (
         <div key="wait" className={'pitwall' + enter}>
           <AmbientNet />
-          <Strip state="waiting" clock={clockText} teams="—" scored="—" />
+          <Strip dark={false} label="CHỜ CÔNG BỐ" live={false} />
           <div className="pw-wait">
             <div className="pw-wait-in">
               <span className="pw-chip">AUTOMOTIVE HACKATHON / 2026</span>
@@ -149,45 +114,32 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
       );
     }
 
-    const showJudges = d.state === 'judges';
-    const rows = d.rows as any[];
-    const teamCount = d.teamCount ?? rows.length;
-    // Vô địch chỉ khi đã công bố hết: giữa lúc công bố lần lượt, đội trên cùng
-    // mới chỉ là đội dẫn đầu trong số đã công bố.
-    const allRevealed = rows.length >= teamCount && teamCount > 0;
-    const leader = rows.find((r) => r.score !== null);
-
-    return (
-      <div key="board" className={'pitwall' + enter}>
-        <AmbientNet />
-        {allRevealed && entering && <Confetti fire={celebrate} />}
-        <Strip
-          state={d.state}
-          clock={clockText}
-          teams={`${rows.length}/${teamCount}`}
-          scored={`${rows.filter((r) => r.score !== null).length}/${rows.length}`}
-        />
-
-        <div className="pw-main">
-          <div>
-            {leader && (
-              <LeaderBand
-                row={leader} maxTotal={d.maxTotal}
-                isChampion={allRevealed} heroImageUrl={d.heroImageUrl}
-              />
-            )}
-            <TimingTower
-              rows={rows} maxTotal={d.maxTotal} baremTotal={d.baremTotal}
-              criteria={d.criteria} interactive={entering} showJudges={showJudges}
-            />
-          </div>
-          <BoardRail
-            criteria={d.criteria}
-            judges={d.judges}
-            teamCount={teamCount}
-          />
+    const rows = (d.rows ?? []) as any[];
+    const row = rows.find((r) => r.team.id === d.currentTeamId) ?? rows[0];
+    if (!row) {
+      return (
+        <div key="stage-empty" className={'pitwall' + enter}>
+          <AmbientNet />
+          <Strip dark={false} label="CHỜ CÔNG BỐ" live={false} />
+          <p className="pw-empty">Chưa có đội nào được công bố.</p>
+          <StaffLink />
         </div>
+      );
+    }
 
+    // Bọc trong .pitwall để .pw-login / .pw-mockflag vẫn lấy được token màu của
+    // board; .is-stage bỏ nền sáng đi để sân khấu tối tự lo phần nền.
+    return (
+      <div key={'stage-' + row.team.id} className="pitwall is-stage">
+        {row.rank === 1 && entering && <Confetti fire={celebrate} />}
+        <RevealStage
+          row={row}
+          teamCount={d.teamCount ?? rows.length}
+          revealedRanks={rows.map((r) => r.rank)}
+          maxTotal={d.maxTotal}
+          baremTotal={d.baremTotal}
+          header={<Strip dark label="ĐANG CÔNG BỐ" live />}
+        />
         <StaffLink />
         {mock && <span className="pw-mockflag">MOCK DATA</span>}
       </div>
@@ -197,51 +149,30 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
   if (!data) {
     return (
       <div className="pitwall">
-        <Strip state="waiting" clock={clockText} teams="—" scored="—" />
-        <div className="pw-main"><p className="pw-empty">Đang kết nối bảng điểm…</p></div>
+        <Strip dark={false} label="ĐANG KẾT NỐI" live={false} />
+        <p className="pw-empty">Đang kết nối bảng điểm…</p>
         <StaffLink />
       </div>
     );
   }
 
-  const spotRow = spotlightId ? data.rows?.find((r: any) => r.team.id === spotlightId) : null;
-
   return (
     <>
       {view(screen, data, true)}
       {leaving && <div className="pw-xfade" aria-hidden>{view(leaving.screen, leaving.data, false)}</div>}
-      {spotRow && (
-        <SpotlightReveal row={spotRow} maxTotal={data.maxTotal} onDone={() => setSpotlightId(null)} />
-      )}
     </>
   );
 }
 
-const STATE_LABEL: Record<string, string> = {
-  waiting: 'CHỜ CÔNG BỐ',
-  ranks: 'ĐANG CÔNG BỐ',
-  judges: 'ĐIỂM BAN GIÁM KHẢO',
-};
-// Giữ lại class cũ của .pw-state để không phải sửa CSS: ranks dùng style "live",
-// judges dùng style "final".
-const STATE_CLASS: Record<string, string> = { waiting: 'wait', ranks: 'live', judges: 'final' };
-
-function Strip({ state, clock, teams, scored }: {
-  state: string; clock: string; teams: string; scored: string;
-}) {
+function Strip({ dark, label, live }: { dark: boolean; label: string; live: boolean }) {
   return (
-    <header className="pw-strip">
+    <header className={'pw-strip' + (dark ? ' on-dark' : '')}>
       <div className="pw-mark">A</div>
       <div className="pw-ident">
         <b>{EVENT}</b>
         <span>{SESSION}</span>
       </div>
-      <span className={`pw-state ${STATE_CLASS[state] ?? 'wait'}`}><i />{STATE_LABEL[state] ?? state}</span>
-      <div className="pw-strip-meters">
-        <div className="pw-meter"><span className="k">Đã công bố</span><span className="v">{teams}</span></div>
-        <div className="pw-meter"><span className="k">Đã chấm</span><span className="v">{scored}</span></div>
-        <div className="pw-meter"><span className="k">Phiên</span><span className="v">{clock}</span></div>
-      </div>
+      <span className={'pw-state ' + (live ? 'live' : 'wait')}><i />{label}</span>
     </header>
   );
 }
