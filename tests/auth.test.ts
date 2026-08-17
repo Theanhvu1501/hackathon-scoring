@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 process.env.SESSION_SECRET = 'test-secret-test-secret-test-secret';
 import { generateAccessCode } from '@/lib/access-code';
-import { signSession, verifySession } from '@/lib/auth';
+import { signSession, verifySession, isAdminish } from '@/lib/auth';
 
 describe('generateAccessCode', () => {
   it('produces XXXX-XXXX from unambiguous chars', () => {
@@ -26,5 +26,15 @@ describe('session sign/verify', () => {
   it('rejects undefined/garbage', () => {
     expect(verifySession(undefined)).toBeNull();
     expect(verifySession('nope')).toBeNull();
+  });
+});
+
+describe('isAdminish', () => {
+  it('nhận admin và superadmin, từ chối judge và null', () => {
+    expect(isAdminish({ role: 'admin' })).toBe(true);
+    expect(isAdminish({ role: 'superadmin' })).toBe(true);
+    expect(isAdminish({ role: 'judge' })).toBe(false);
+    expect(isAdminish(null)).toBe(false);
+    expect(isAdminish(undefined)).toBe(false);
   });
 });

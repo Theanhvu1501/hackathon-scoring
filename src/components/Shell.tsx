@@ -12,25 +12,44 @@ const ADMIN_NAV = [
   { href: '/admin/barem', label: 'Cấu hình barem', ic: '＃' },
   { href: '/admin/publish', label: 'Điều khiển công bố', ic: '◉' },
 ];
+// Chỉ superadmin thấy hai mục này.
+const SUPER_NAV = [
+  { href: '/admin/accounts', label: 'Tài khoản quản trị', ic: '⚿' },
+  { href: '/admin/audit', label: 'Nhật ký thao tác', ic: '☰' },
+];
 const JUDGE_NAV = [
   { href: '/judge', label: 'Danh sách đội', ic: '◈' },
+  { href: '/judge/scores', label: 'Điểm ban giám khảo', ic: '◐' },
   { href: '/judge/results', label: 'Kết quả', ic: '≡' },
 ];
 
+export type ShellRole = 'superadmin' | 'admin' | 'judge';
+
+const ROLE_SHORT: Record<ShellRole, string> = {
+  superadmin: 'Super Admin', admin: 'Admin', judge: 'Giám khảo',
+};
+const ROLE_LONG: Record<ShellRole, string> = {
+  superadmin: 'Quản trị hệ thống', admin: 'Quản trị viên', judge: 'Ban giám khảo',
+};
+
 type Crumb = { label: string; href?: string };
 
-function buildCrumbs(path: string, role: 'admin' | 'judge'): Crumb[] {
-  const home = role === 'admin' ? '/admin' : '/judge';
-  const items: Crumb[] = [{ label: role === 'admin' ? 'Admin' : 'Ban giám khảo', href: home }];
+function buildCrumbs(path: string, role: ShellRole): Crumb[] {
+  const isAdmin = role !== 'judge';
+  const home = isAdmin ? '/admin' : '/judge';
+  const items: Crumb[] = [{ label: isAdmin ? 'Admin' : 'Ban giám khảo', href: home }];
   const LABEL: Record<string, string> = {
     '/admin': 'Tổng quan', '/admin/teams': 'Quản lý đội thi', '/admin/judges': 'Tài khoản BGK',
     '/admin/barem': 'Cấu hình barem', '/admin/publish': 'Điều khiển công bố',
-    '/judge': 'Danh sách đội', '/judge/results': 'Kết quả',
+    '/admin/accounts': 'Tài khoản quản trị', '/admin/audit': 'Nhật ký thao tác',
+    '/judge': 'Danh sách đội', '/judge/results': 'Kết quả', '/judge/scores': 'Điểm ban giám khảo',
   };
   if (path.startsWith('/admin/teams/')) {
     items.push({ label: 'Quản lý đội thi', href: '/admin/teams' }, { label: 'Chi tiết đội' });
   } else if (path.startsWith('/judge/score/')) {
     items.push({ label: 'Danh sách đội', href: '/judge' }, { label: 'Chấm điểm' });
+  } else if (path.startsWith('/judge/team/')) {
+    items.push({ label: 'Danh sách đội', href: '/judge' }, { label: 'Chi tiết đội' });
   } else {
     items.push({ label: LABEL[path] || '' });
   }
@@ -40,14 +59,15 @@ function buildCrumbs(path: string, role: 'admin' | 'judge'): Crumb[] {
 export default function Shell({
   role, userName = '', children,
 }: {
-  role: 'admin' | 'judge';
+  role: ShellRole;
   userName?: string;
   children: React.ReactNode;
 }) {
   const path = usePathname();
-  const nav = role === 'admin' ? ADMIN_NAV : JUDGE_NAV;
+  const isAdmin = role !== 'judge';
+  const nav = role === 'superadmin' ? [...ADMIN_NAV, ...SUPER_NAV] : isAdmin ? ADMIN_NAV : JUDGE_NAV;
   const crumbs = buildCrumbs(path, role);
-  const home = role === 'admin' ? '/admin' : '/judge';
+  const home = isAdmin ? '/admin' : '/judge';
   const rest = crumbs.slice(1);
   const [open, setOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
@@ -81,7 +101,10 @@ export default function Shell({
         </div>
         <div className="side-body">
           <div className="nav-group" style={{ marginTop: 0 }}>
-            <div className={cx('nav-label', role)}>{role === 'admin' ? 'Admin CMS' : 'Ban giám khảo'}</div>
+            {/* class vẫn là admin/judge để dùng lại đúng style sẵn có */}
+            <div className={cx('nav-label', isAdmin ? 'admin' : 'judge')}>
+              {role === 'superadmin' ? 'Super Admin CMS' : isAdmin ? 'Admin CMS' : 'Ban giám khảo'}
+            </div>
             {nav.map((n) => {
               const active = (n.href === '/admin' || n.href === '/judge') ? path === n.href : path.startsWith(n.href);
               return (
@@ -107,13 +130,13 @@ export default function Shell({
                 <span className="avatar">{initials}</span>
                 <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2, textAlign: 'left' }}>
                   <span className="nm">{userName || 'Người dùng'}</span>
-                  <span className="rl">{role === 'admin' ? 'Admin' : 'Giám khảo'}</span>
+                  <span className="rl">{ROLE_SHORT[role]}</span>
                 </span>
                 <span style={{ color: 'var(--muted-2)', fontSize: 11 }}>▾</span>
               </button>
               {open && (
                 <div className="usermenu-pop" role="menu">
-                  <div className="u-head"><b>{userName || 'Người dùng'}</b><small>{role === 'admin' ? 'Quản trị viên' : 'Ban giám khảo'}</small></div>
+                  <div className="u-head"><b>{userName || 'Người dùng'}</b><small>{ROLE_LONG[role]}</small></div>
                   <button className="menu-item danger" role="menuitem" onClick={logout}>
                     <span>⎋</span> Đăng xuất
                   </button>
