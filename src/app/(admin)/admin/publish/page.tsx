@@ -1,68 +1,195 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { fetcher } from '@/lib/ui';
 import ImagePicker from '@/components/ImagePicker';
+import { TeamLogo } from '@/components/Avatar';
+import { useConfirm } from '@/components/ConfirmProvider';
 
-const STEPS = [{ k: 'drafting', n: '1', t: 'Đang chấm' }, { k: 'provisional', n: '2', t: 'Điểm tạm' }, { k: 'final', n: '3', t: 'Chung cuộc' }];
+type Row = {
+  team: { id: string; name: string; code: string; logoUrl: string | null };
+  score: number | null; rank: number; tie: boolean;
+};
 
 export default function Publish() {
-  const [state, setState] = useState('drafting');
-  const [hero, setHero] = useState<string>('');
-  const [banner, setBanner] = useState<string>('');
+  const [rows, setRows] = useState<Row[]>([]);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [judgesShown, setJudgesShown] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [hero, setHero] = useState('');
+  const [banner, setBanner] = useState('');
+  const confirm = useConfirm();
 
-  async function load() {
-    const [rev, img] = await Promise.all([fetcher('/api/reveal'), fetcher('/api/board/image')]);
-    setState(rev.state);
+  const load = useCallback(async () => {
+    const [res, rev, img] = await Promise.all([
+      fetcher('/api/results/all'), fetcher('/api/reveal'), fetcher('/api/board/image'),
+    ]);
+    setRows(res.rows);
+    setRevealed(new Set(rev.revealedTeamIds));
+    setJudgesShown(rev.judgeScoresRevealed);
     setHero(img.heroImageUrl || '');
     setBanner(img.bannerImageUrl || '');
-  }
-  useEffect(() => { load(); }, []);
+  }, []);
+  useEffect(() => { load(); }, [load]);
 
-  async function set(s: string) { await fetcher('/api/reveal', { method: 'POST', body: JSON.stringify({ state: s }) }); setState(s); }
-  async function saveHero(v: string) {
-    setHero(v);
-    await fetcher('/api/board/image', { method: 'POST', body: JSON.stringify({ imageUrl: v || null }) });
+  async function act(body: any, key: string) {
+    setBusy(key);
+    try {
+      await fetcher('/api/reveal', { method: 'POST', body: JSON.stringify(body) });
+      await load();
+    } finally { setBusy(null); }
   }
-  async function saveBanner(v: string) {
-    setBanner(v);
-    await fetcher('/api/board/image', { method: 'POST', body: JSON.stringify({ bannerImageUrl: v || null }) });
+
+  async function revealJudges() {
+    if (!(await confirm({
+      title: 'Công bố điểm ban giám khảo',
+      message: 'Board sẽ hiện điểm của từng giám khảo (ẩn tên) cho mọi đội đã công bố. Xác nhận?',
+      confirmText: 'Công bố',
+    }))) return;
+    await act({ action: 'revealJudges' }, 'judges');
   }
-  const idx = STEPS.findIndex((s) => s.k === state);
+
+  async function reset() {
+    if (!(await confirm({
+      title: 'Reset về màn chờ',
+      message: 'Thu hồi toàn bộ đội đã công bố và tắt điểm BGK. Board quay lại màn chờ. Điểm đã chấm không bị ảnh hưởng.',
+      confirmText: 'Reset', danger: true,
+    }))) return;
+    await act({ action: 'reset' }, 'reset');
+  }
+
+  // Hạng bét lên đầu: ban tổ chức xướng tên từ dưới lên.
+  const order = [...rows].sort((a, b) => b.rank - a.rank);
+  const doneCount = revealed.size;
 
   return (
     <>
-      <div className="stepper">{STEPS.map((s, i) => (
-        <div key={s.k} className={'step ' + (i === idx ? 'active' : '') + (i < idx ? ' done' : '')}>
-          <div className="step-n">{i < idx ? '✓' : s.n}</div><h4>{s.t}</h4>
+      <div className="stepper">
+        <div className={'step ' + (doneCount > 0 ? 'done' : 'active')}>
+          <div className="step-n">{doneCount > 0 ? '✓' : '1'}</div><h4>Công bố thứ hạng</h4>
         </div>
-      ))}</div>
+        <div className={'step ' + (judgesShown ? 'done' : doneCount > 0 ? 'active' : '')}>
+          <div className="step-n">{judgesShown ? '✓' : '2'}</div><h4>Công bố điểm BGK</h4>
+        </div>
+      </div>
 
-      <div className="two-col" style={{ gridTemplateColumns: '1.3fr 1fr', alignItems: 'start', marginTop: 20 }}>
-        <div className="card card-pad">
-          {state === 'drafting' && <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 12 }} onClick={() => set('provisional')}>▶ Mở bảng điểm tạm (realtime)</button>}
-          {state === 'provisional' && <>
-            <div className="note" style={{ marginBottom: 16 }}><span>◉</span><div><b style={{ color: 'var(--text)' }}>Đang chiếu điểm tạm.</b> Điểm Trưởng BGK đang giữ kín.</div></div>
-            <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 14, fontSize: 15 }} onClick={() => set('final')}>♛ LỘ ĐIỂM TRƯỞNG BGK &amp; CHỐT KẾT QUẢ</button>
-            <button className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} onClick={() => set('drafting')}>← Quay lui về màn chờ</button>
-          </>}
-          {state === 'final' && <>
-            <div className="note" style={{ marginBottom: 16 }}><span style={{ color: 'var(--green)' }}>✓</span><div><b style={{ color: 'var(--text)' }}>Đã công bố chung cuộc.</b></div></div>
-            <a className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 12 }} href="/board" target="_blank">Xem bảng công khai →</a>
-            <button className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }} onClick={() => set('provisional')}>← Quay lui (mở lại để sửa)</button>
-          </>}
+      <div className="two-col" style={{ gridTemplateColumns: '1.4fr 1fr', alignItems: 'start', marginTop: 20 }}>
+        <div style={{ display: 'grid', gap: 16 }}>
+          <div className="card card-pad">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <h3 style={{ fontSize: 15 }}>Bước 1 · Công bố từng đội</h3>
+              <span className={'pill ' + (doneCount === rows.length && rows.length > 0 ? 'done' : 'pending')}>
+                Đã công bố {doneCount}/{rows.length}
+              </span>
+            </div>
+            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>
+              Sắp sẵn từ hạng bét lên hạng nhất. Ấn <b>Công bố</b> là board bật màn hình hạng
+              của đội đó rồi đọng lại thành bảng xếp hạng.
+            </p>
+            <div style={{ overflowX: 'auto' }}>
+              <table>
+                <thead>
+                  <tr>
+                    <th style={{ width: 60 }}>Hạng</th>
+                    <th>Đội</th>
+                    <th style={{ textAlign: 'right' }}>Điểm</th>
+                    <th style={{ textAlign: 'right' }}>Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {order.map((r) => {
+                    const on = revealed.has(r.team.id);
+                    return (
+                      <tr key={r.team.id} style={on ? { opacity: .55 } : undefined}>
+                        <td className="tnum"><b>{r.tie ? 'T' : ''}{r.rank}</b></td>
+                        <td>
+                          <div className="tcell">
+                            <TeamLogo code={r.team.code} logoUrl={r.team.logoUrl} />
+                            <b>{r.team.name}</b>
+                          </div>
+                        </td>
+                        <td className="tnum" style={{ textAlign: 'right' }}>
+                          {r.score === null ? '—' : r.score.toFixed(1)}
+                        </td>
+                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          {on ? (
+                            <button className="btn btn-sm" disabled={busy === r.team.id}
+                              onClick={() => act({ action: 'unrevealTeam', teamId: r.team.id }, r.team.id)}>
+                              ↩ Thu hồi
+                            </button>
+                          ) : (
+                            <button className="btn btn-sm btn-primary" disabled={busy === r.team.id}
+                              onClick={() => act({ action: 'revealTeam', teamId: r.team.id }, r.team.id)}>
+                              ▶ Công bố
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {rows.length === 0 && (
+                    <tr><td colSpan={4} style={{ color: 'var(--muted-2)' }}>Chưa có đội nào.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="card card-pad">
+            <h3 style={{ fontSize: 15, marginBottom: 6 }}>Bước 2 · Công bố điểm ban giám khảo</h3>
+            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>
+              Board bung điểm của từng giám khảo dưới mỗi đội, hiện nhãn <b>BGK Chính / BGK 1 / BGK 2…</b>,
+              không hiện tên thật.
+            </p>
+            {judgesShown ? (
+              <div className="note">
+                <span style={{ color: 'var(--green)' }}>✓</span>
+                <div><b style={{ color: 'var(--text)' }}>Đã công bố điểm BGK.</b></div>
+              </div>
+            ) : (
+              <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', padding: 12 }}
+                disabled={doneCount === 0 || busy === 'judges'} onClick={revealJudges}>
+                ♛ Công bố điểm ban giám khảo
+              </button>
+            )}
+            {doneCount === 0 && !judgesShown && (
+              <div className="hint" style={{ marginTop: 10 }}>Công bố ít nhất một đội trước đã.</div>
+            )}
+          </div>
+
+          <div className="card card-pad">
+            <button className="btn btn-danger btn-sm" disabled={busy === 'reset'} onClick={reset}>
+              ↺ Reset về màn chờ
+            </button>
+            <a className="btn btn-sm" style={{ marginLeft: 10 }} href="/board" target="_blank">
+              Xem bảng công khai →
+            </a>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gap: 16 }}>
           <div className="card card-pad">
             <h3 style={{ fontSize: 15, marginBottom: 6 }}>Banner màn chờ</h3>
-            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>Phủ kín trang board khi <b>chưa mở bảng điểm tạm</b>. Nên là ảnh ngang, tỉ lệ 16:9. Bỏ trống thì dùng màn chờ mặc định.</p>
-            <ImagePicker value={banner} onChange={saveBanner} size={120} max={1600} placeholder="＋ Banner" />
+            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>
+              Phủ kín trang board khi <b>chưa công bố đội nào</b>. Nên là ảnh ngang, tỉ lệ 16:9.
+              Bỏ trống thì dùng màn chờ mặc định.
+            </p>
+            <ImagePicker value={banner} size={120} max={1600} placeholder="＋ Banner"
+              onChange={async (v) => {
+                setBanner(v);
+                await fetcher('/api/board/image', { method: 'POST', body: JSON.stringify({ bannerImageUrl: v || null }) });
+              }} />
           </div>
 
           <div className="card card-pad">
             <h3 style={{ fontSize: 15, marginBottom: 6 }}>Ảnh nền màn chiếu</h3>
-            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>Ảnh ở panel bên trái của bảng điểm khi đang chạy realtime (nên là ảnh dọc/chân dung, độ phân giải tốt).</p>
-            <ImagePicker value={hero} onChange={saveHero} size={120} max={900} placeholder="＋ Ảnh" />
+            <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>
+              Ảnh ở panel bên trái của bảng điểm khi đang chạy (nên là ảnh dọc/chân dung).
+            </p>
+            <ImagePicker value={hero} size={120} max={900} placeholder="＋ Ảnh"
+              onChange={async (v) => {
+                setHero(v);
+                await fetcher('/api/board/image', { method: 'POST', body: JSON.stringify({ imageUrl: v || null }) });
+              }} />
           </div>
         </div>
       </div>
