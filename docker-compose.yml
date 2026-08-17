@@ -28,6 +28,10 @@ services:
     env_file: [.env]
     environment:
       NODE_ENV: production
+      # Next standalone server.js bind vào đúng $HOSTNAME. Trong Docker biến này
+      # mặc định là container id, nên app CHỈ listen trên IP mạng container và
+      # healthcheck gọi 127.0.0.1:3000 luôn fail -> container vĩnh viễn unhealthy.
+      HOSTNAME: 0.0.0.0
     # Chỉ lắng nghe trên localhost — nginx đứng trước lo TLS.
     # Host dùng 3100 chứ không phải 3000: trên VPS các port 3000/3001/4000/4001/
     # 5000/5001 đã bị những app khác trên cùng máy chiếm.
