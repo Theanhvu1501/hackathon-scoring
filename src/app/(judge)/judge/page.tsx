@@ -39,17 +39,30 @@ export default function JudgeTeams() {
         {shown.map((t) => {
           const done = doneIds.has(t.id);
           return (
-            <Link key={t.id} href={'/judge/score/' + t.id} className="card card-pad" style={{ cursor: 'pointer', borderColor: done ? 'rgba(31,157,85,.4)' : undefined }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
-                <div className="tcell">
-                  <TeamLogo code={t.code} logoUrl={t.logoUrl} color={done ? 'var(--green)' : 'var(--blue)'} />
-                  <div><b style={{ fontFamily: 'Space Grotesk', fontSize: 16 }}>{t.name}</b>
-                    <small style={{ display: 'block', color: 'var(--muted-2)' }}>{t.members?.length || 0} thành viên</small></div>
+            <div key={t.id} className="card card-pad" style={{ borderColor: done ? 'rgba(31,157,85,.4)' : undefined }}>
+              <Link href={'/judge/team/' + t.id} style={{ display: 'block', color: 'inherit' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                  <div className="tcell">
+                    <TeamLogo code={t.code} logoUrl={t.logoUrl} color={done ? 'var(--green)' : 'var(--blue)'} />
+                    <div><b style={{ fontFamily: 'Space Grotesk', fontSize: 16 }}>{t.name}</b>
+                      <small style={{ display: 'block', color: 'var(--muted-2)' }}>{t.members?.length || 0} thành viên</small></div>
+                  </div>
+                  <span className={'pill ' + (done ? 'done' : 'pending')}>
+                    {done ? 'Đã nộp · đã khoá' : 'Chưa chấm'}
+                  </span>
                 </div>
-                <span className={'pill ' + (done ? 'done' : 'pending')}>{done ? 'Đã chấm' : 'Chưa chấm'}</span>
+                <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 14 }}>{t.tag}</p>
+              </Link>
+
+              {/* Hai đường riêng: xem thông tin đội, và mở phiếu chấm. Trước đây cả
+                  card dẫn thẳng vào trang chấm, không có lối nào xem đội. */}
+              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <Link className="btn btn-sm" href={'/judge/team/' + t.id}
+                  style={{ flex: 1, justifyContent: 'center' }}>Xem đội</Link>
+                <Link className={'btn btn-sm ' + (done ? '' : 'btn-primary')} href={'/judge/score/' + t.id}
+                  style={{ flex: 1, justifyContent: 'center' }}>{done ? 'Xem phiếu' : 'Chấm điểm'}</Link>
               </div>
-              <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 14 }}>{t.tag}</p>
-            </Link>
+            </div>
           );
         })}
         {shown.length === 0 && <div className="card card-pad" style={{ color: 'var(--muted-2)' }}>Không có đội nào.</div>}
