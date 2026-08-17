@@ -83,6 +83,49 @@ export async function judgeScoreDetail(judgeId: string): Promise<{
   return { criteria, rows };
 }
 
+export type MatrixCell = { judgeId: string; total: number | null; status: JudgeScoreStatus };
+export type MatrixRow = {
+  teamId: string; teamName: string; teamCode: string;
+  cells: MatrixCell[]; total: number | null;
+};
+
+/**
+ * Bảng đội × giám khảo, TÊN THẬT. Đây là view sau đăng nhập của ban giám khảo và
+ * ban tổ chức — việc ẩn tên chỉ áp dụng cho board công khai (xem lib/judge-label.ts).
+ *
+ * Sắp đội theo createdAt, KHÔNG theo hạng: đây là bảng đối chiếu phiếu chấm, thứ
+ * tự phải ổn định giữa các lần mở, không nhảy mỗi khi có người nộp điểm.
+ */
+export async function scoreMatrix(viewerId: string): Promise<{
+  judges: { id: string; name: string; isHead: boolean; isMe: boolean }[];
+  rows: MatrixRow[];
+}> {
+  const [judges, teams, scores] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: 'judge' }, orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, isHead: true },
+    }),
+    prisma.team.findMany({ orderBy: { createdAt: 'asc' }, select: { id: true, name: true, code: true } }),
+    prisma.score.findMany({ select: { judgeId: true, teamId: true, value: true, submitted: true } }),
+  ]);
+
+  const rows: MatrixRow[] = teams.map((team) => {
+    const cells: MatrixCell[] = judges.map((j) => {
+      const mine = scores.filter((s) => s.teamId === team.id && s.judgeId === j.id);
+      if (mine.length === 0) return { judgeId: j.id, total: null, status: 'none' };
+      const total = Math.round(mine.reduce((a, s) => a + s.value, 0) * 10) / 10;
+      return { judgeId: j.id, total, status: mine.every((s) => s.submitted) ? 'submitted' : 'draft' };
+    });
+    const scored = cells.filter((c) => c.total !== null).map((c) => c.total!);
+    return {
+      teamId: team.id, teamName: team.name, teamCode: team.code, cells,
+      total: scored.length ? Math.round(scored.reduce((a, b) => a + b, 0) * 10) / 10 : null,
+    };
+  });
+
+  return { judges: judges.map((j) => ({ ...j, isMe: j.id === viewerId })), rows };
+}
+
 // Returns the (judge, team) pairs a judge has SUBMITTED. Uses distinct instead of
 // groupBy(_max: boolean) because Postgres has no max(boolean) aggregate.
 export async function judgeProgress() {
