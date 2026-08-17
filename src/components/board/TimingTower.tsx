@@ -15,12 +15,15 @@ type Row = {
 const FALLBACK = '#0047FF';
 
 export default function TimingTower({
-  rows, maxTotal, baremTotal = 0, criteria = [], interactive = true,
+  rows, maxTotal, baremTotal = 0, criteria = [], interactive = true, showJudges = false,
 }: {
   rows: Row[]; maxTotal: number; baremTotal?: number;
   criteria?: BoardCriterion[];
   /** false on the frozen copy rendered during a screen crossfade. */
   interactive?: boolean;
+  /** Bước 2 đã mở: hiện dải chip điểm từng BGK và nút mở popup. Trước đó điểm
+   *  BGK chưa được công bố, nên cả chip lẫn nút đều không được tồn tại. */
+  showJudges?: boolean;
 }) {
   const [openTeam, setOpenTeam] = useState<string | null>(null);
   const towerRef = useRef<HTMLDivElement>(null);
@@ -147,7 +150,7 @@ export default function TimingTower({
               <div className={'pw-gap' + (gap === 0 ? ' lead' : '')}>
                 {gap === null ? 'chưa chấm' : gap === 0 ? 'LEADER' : gap.toFixed(1)}
               </div>
-              {interactive && r.judgeScores && r.judgeScores.length > 0 && (
+              {interactive && showJudges && r.judgeScores && r.judgeScores.length > 0 && (
                 <button
                   type="button"
                   className="pw-jbtn"
@@ -158,6 +161,18 @@ export default function TimingTower({
                 </button>
               )}
             </div>
+
+            {/* Inline chứ không bắt bấm mở popup: đây là khoảnh khắc cả phòng
+                đang xem màn hình, không ai bấm chuột. */}
+            {showJudges && r.judgeScores && r.judgeScores.length > 0 && (
+              <div className="pw-jchips">
+                {r.judgeScores.map((j) => (
+                  <span key={j.judgeId} className={'pw-jchip' + (j.isHead ? ' is-head' : '')}>
+                    {j.label} <b>{j.total === null ? '—' : j.total.toFixed(1)}</b>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}

@@ -1,13 +1,14 @@
 'use client';
 import type { BoardCriterion } from './TimingTower';
 
-type Judge = { id: string; name: string; isHead: boolean; submitted: number };
+/** `label` chứ không phải `name`: đây là component của board công khai. */
+type Judge = { id: string; label: string; isHead: boolean; submitted: number };
 
 // Context for the tower: what the bar segments mean, and how much
 // of the field each judge has actually scored.
 export default function BoardRail({
-  criteria = [], judges = [], teamCount, isFinal,
-}: { criteria?: BoardCriterion[]; judges?: Judge[]; teamCount: number; isFinal: boolean }) {
+  criteria = [], judges = [], teamCount,
+}: { criteria?: BoardCriterion[]; judges?: Judge[]; teamCount: number }) {
   return (
     <aside className="pw-rail">
       {criteria.length > 0 && (
@@ -30,11 +31,10 @@ export default function BoardRail({
           <h3>Tiến độ chấm</h3>
           <div className="pw-judges">
             {judges.map((j) => {
-              const held = j.isHead && !isFinal;
               return (
-                <div className={'pw-judge' + (held ? ' held' : '')} key={j.id}>
+                <div className="pw-judge" key={j.id}>
                   <span className="nm">
-                    {j.name}
+                    {j.label}
                     {j.isHead && <span className="role"> · Trưởng BGK</span>}
                   </span>
                   <span className="ct">{j.submitted}/{teamCount}</span>
@@ -53,7 +53,7 @@ export default function BoardRail({
         <p className="pw-note">
           Thanh màu dài theo tổng điểm, chia theo từng tiêu chí. Vạch cam là điểm của đội dẫn đầu —
           phần thiếu so với vạch chính là khoảng cách ở cột bên phải.
-          {!isFinal && <> <b>Điểm tạm chưa tính phiếu của Trưởng ban giám khảo.</b></>}
+          Bảng chỉ hiện những đội đã được công bố; số hạng là hạng chung cuộc trên toàn bộ đội thi.
         </p>
       </section>
     </aside>

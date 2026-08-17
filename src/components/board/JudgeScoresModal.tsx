@@ -2,7 +2,9 @@
 import { useEffect, useRef } from 'react';
 import { teamMark } from '@/lib/team-art';
 
-export type JudgeScore = { judgeId: string; name: string; isHead: boolean; total: number | null };
+/** `label` chứ không phải `name`: tên thật của giám khảo không bao giờ được gửi
+ *  xuống board công khai — xem src/lib/judge-label.ts. */
+export type JudgeScore = { judgeId: string; label: string; isHead: boolean; total: number | null };
 
 type Props = {
   team: { name: string; code: string; logoUrl?: string | null };
@@ -44,7 +46,7 @@ export default function JudgeScoresModal({
           <span className="pw-modal-ava"><img src={team.logoUrl || teamMark(team.code)} alt="" /></span>
           <div className="pw-modal-id">
             <b>{team.name}</b>
-            <span>Điểm từng giám khảo</span>
+            <span>Điểm từng giám khảo (ẩn tên)</span>
           </div>
           <button ref={closeRef} type="button" className="pw-modal-x" onClick={onClose} aria-label="Đóng">✕</button>
         </header>
@@ -54,7 +56,7 @@ export default function JudgeScoresModal({
           {judgeScores.map((j) => (
             <div className={'pw-jrow' + (j.total === null ? ' is-none' : '')} key={j.judgeId}>
               <span className="nm">
-                {j.name}
+                {j.label}
                 {j.isHead && <em className="role">Trưởng BGK</em>}
               </span>
               <span className="val">

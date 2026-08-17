@@ -624,9 +624,90 @@
 
 @media(prefers-reduced-motion:reduce){
   .pitwall,.pitwall *,.pitwall *::before,.pitwall *::after,
-  .pw-xfade,.pw-modal-wrap,.pw-modal-wrap *{
+  .pw-xfade,.pw-modal-wrap,.pw-modal-wrap *,.pw-spot,.pw-spot *{
     animation:none !important;transition-duration:.01ms !important;
   }
   /* No fade means no dissolve — the frozen copy must not sit on top opaque. */
   .pw-xfade{display:none}
 }
+
+/* ---------- Spotlight: một đội vừa được công bố ---------- */
+/* Phủ toàn board ~6s rồi tắt, đội đó rơi vào timing tower bên dưới.
+   Cùng hệ màu light của board: veil xanh mờ, thẻ giấy trắng, số hạng gradient cam.
+   z-index dưới .pw-modal-wrap (70) để popup điểm BGK vẫn đè lên được. */
+.pw-spot{
+  position:fixed;inset:0;z-index:60;
+  display:grid;place-items:center;padding:24px;
+  font-family:var(--pw-ui);color:var(--pw-ink);
+  background:
+    radial-gradient(900px 560px at 50% 40%, rgba(0,163,255,.22), transparent 62%),
+    rgba(233,243,255,.86);
+  backdrop-filter:blur(10px);
+  animation:pw-spot-in .5s cubic-bezier(.22,1,.36,1) both;
+}
+.pw-spot-in{
+  width:min(720px,100%);
+  display:grid;gap:clamp(10px,1.4vw,18px);justify-items:center;text-align:center;
+  padding:clamp(24px,3.4vw,46px);
+  border-radius:var(--r-lg);
+  background:linear-gradient(120deg,rgba(255,255,255,.96),rgba(255,255,255,.82));
+  border:1px solid rgba(255,255,255,.9);
+  box-shadow:var(--shadow-lift);
+  backdrop-filter:blur(12px);
+}
+.pw-spot-rank{display:grid;gap:4px;justify-items:center}
+.pw-spot-rank .k{
+  font-family:var(--pw-pixel);font-size:11px;letter-spacing:.34em;
+  color:var(--pw-muted-2);
+}
+.pw-spot-rank b{
+  font-family:var(--pw-disp);font-weight:700;
+  font-size:clamp(76px,13vw,168px);line-height:.88;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+  background:var(--grad-warm);-webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.pw-spot-logo{
+  width:clamp(64px,7vw,92px);height:clamp(64px,7vw,92px);
+  border-radius:var(--r-md);object-fit:cover;
+  box-shadow:var(--shadow-card);
+}
+.pw-spot-name{
+  font-family:var(--pw-disp);font-weight:700;text-transform:uppercase;
+  font-size:clamp(26px,4.2vw,58px);line-height:1.04;letter-spacing:-.015em;
+  color:var(--pw-navy);
+}
+.pw-spot-tag{
+  font-size:clamp(12.5px,1.2vw,15px);color:var(--pw-muted);
+  max-width:46ch;line-height:1.5;
+}
+.pw-spot-score{
+  font-family:var(--pw-disp);font-weight:700;
+  font-size:clamp(30px,4vw,52px);line-height:1;
+  font-variant-numeric:tabular-nums;color:var(--pw-fpt);
+}
+.pw-spot-score small{
+  font-family:var(--pw-data);font-weight:400;
+  font-size:13px;color:var(--pw-muted-2);margin-left:8px;
+}
+@keyframes pw-spot-in{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+
+/* ---------- Dải chip điểm từng BGK dưới mỗi dòng ---------- */
+/* Chỉ hiện sau bước 2. Nhãn đã ẩn tên ngay từ server (xem judge-label.ts). */
+.pw-jchips{
+  grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;
+  margin-top:8px;padding-top:8px;border-top:1px dashed var(--pw-line);
+}
+.pw-jchip{
+  display:inline-flex;align-items:baseline;gap:6px;
+  padding:4px 10px;border-radius:999px;
+  background:rgba(3,78,162,.06);border:1px solid var(--pw-line);
+  font-size:11.5px;color:var(--pw-muted);
+}
+.pw-jchip b{
+  font-family:var(--pw-data);font-size:12px;color:var(--pw-navy);
+  font-variant-numeric:tabular-nums;
+}
+.pw-jchip.is-head{
+  background:rgba(249,115,34,.10);border-color:rgba(249,115,34,.28);
+}
+.pw-jchip.is-head b{color:#C4550F}

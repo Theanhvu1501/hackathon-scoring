@@ -11,8 +11,14 @@ type Row = {
 // project visual, team mark, crew. Uploaded images take priority over the
 // generated stand-ins.
 export default function LeaderBand({
-  row, maxTotal, isFinal, heroImageUrl,
-}: { row: Row; maxTotal: number; isFinal: boolean; heroImageUrl?: string | null }) {
+  row, maxTotal, isChampion, heroImageUrl,
+}: {
+  row: Row; maxTotal: number;
+  /** true khi ĐÃ công bố hết các đội — lúc đó đội đứng đầu mới thật là vô địch.
+   *  Giữa lúc công bố lần lượt thì nó chỉ là đội dẫn đầu trong số đã công bố. */
+  isChampion: boolean;
+  heroImageUrl?: string | null;
+}) {
   const t = row.team;
   const crew = (t.members ?? []).slice(0, 6);
   const hue = teamHue(t.code);
@@ -21,7 +27,7 @@ export default function LeaderBand({
 
   return (
     <div
-      className={'pw-lead' + (isFinal ? ' is-champion' : '')}
+      className={'pw-lead' + (isChampion ? ' is-champion' : '')}
       style={{ ['--pw-hue' as any]: hue }}
     >
       <div className="pw-lead-visual">
@@ -31,7 +37,7 @@ export default function LeaderBand({
 
       <div className="pw-lead-txt">
         <div className="pw-lead-label">
-          <span className="pw-chip">{isFinal ? 'CHAMPION / 2026' : 'LEADING / LIVE'}</span>
+          <span className="pw-chip">{isChampion ? 'CHAMPION / 2026' : 'ĐANG DẪN ĐẦU'}</span>
         </div>
         <div className="pw-lead-name">{t.name}</div>
         {t.tag && <div className="pw-lead-tag">{t.tag}</div>}

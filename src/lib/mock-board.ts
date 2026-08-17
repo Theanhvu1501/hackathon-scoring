@@ -2,6 +2,7 @@
 // Produces the exact shape of /api/results plus the optional extras the
 // timing tower can render (criteria, per-team breakdown, judge roster).
 import { computeLeaderboard, judgeTotal, ScoreLite, TeamLite } from '@/lib/scoring';
+import { anonymizeJudges } from '@/lib/judge-label';
 
 export type BoardCriterion = { id: string; label: string; short: string; max: number; color: string };
 
@@ -51,21 +52,21 @@ function wobble(teamIndex: number, critIndex: number, tick: number): number {
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 export type MockOptions = {
-  state?: 'drafting' | 'provisional' | 'final';
+  state?: 'waiting' | 'ranks' | 'judges';
   tick?: number;
   /** Teams still awaiting any score — they render as "chưa chấm". */
   unscoredCount?: number;
 };
 
 export function buildMockResults(opts: MockOptions = {}) {
-  const { state = 'provisional', tick = 0, unscoredCount = state === 'final' ? 0 : 1 } = opts;
+  const { state = 'ranks', tick = 0, unscoredCount = state === 'judges' ? 0 : 1 } = opts;
 
   const teams: TeamLite[] = SEEDS.map((s, i) => ({
     id: 't' + i, name: s.name, code: s.code, tag: s.tag, logoUrl: null,
   }));
 
-  // In provisional the head judge is excluded, so hold their scores back too.
-  const activeJudges = state === 'final' ? MOCK_JUDGES : MOCK_JUDGES.filter((j) => !j.isHead);
+  // Không còn cơ chế giữ kín điểm trưởng BGK: mọi giám khảo đều được tính.
+  const activeJudges = MOCK_JUDGES;
   const scored = SEEDS.length - unscoredCount;
 
   const scores: ScoreLite[] = [];
@@ -73,7 +74,7 @@ export function buildMockResults(opts: MockOptions = {}) {
     if (ti >= scored) return;
     activeJudges.forEach((judge, ji) => {
       // Late judges lag on the tail of the field — a real board is never fully filled.
-      if (state !== 'final' && ji === activeJudges.length - 1 && ti >= scored - 2) return;
+      if (state !== 'judges' && ji === activeJudges.length - 1 && ti >= scored - 2) return;
       MOCK_CRITERIA.forEach((crit, ci) => {
         const spread = ((ji - activeJudges.length / 2) * 0.45) + wobble(ti, ci, tick) * 0.55;
         scores.push({
@@ -84,16 +85,13 @@ export function buildMockResults(opts: MockOptions = {}) {
     });
   });
 
-  const phase = state === 'final' ? 'final' : 'provisional';
   const ranked = computeLeaderboard({ teams, scores });
 
-  // Sum each criterion across the judges this phase counts, so the segments add
-  // up to exactly the team total the tower prints next to them.
-  const headId = MOCK_JUDGES.find((j) => j.isHead)!.id;
+  // Sum each criterion across every judge, so the segments add up to exactly the
+  // team total the tower prints next to them.
   const breakdownFor = (teamId: string) =>
     MOCK_CRITERIA.map((crit) => {
-      const vals = scores.filter((s) =>
-        s.teamId === teamId && s.criterionId === crit.id && (phase === 'final' || s.judgeId !== headId));
+      const vals = scores.filter((s) => s.teamId === teamId && s.criterionId === crit.id);
       if (!vals.length) return { criterionId: crit.id, value: 0 };
       return {
         criterionId: crit.id,
@@ -109,26 +107,31 @@ export function buildMockResults(opts: MockOptions = {}) {
         id: r.team.id + '-m' + mi, name, photoUrl: null, teamRole: mi === 0 ? 'Trưởng nhóm' : null,
       })),
     },
+    revealed: true,
     breakdown: r.score === null ? [] : breakdownFor(r.team.id),
-    judgeScores: MOCK_JUDGES
-      .filter((j) => phase === 'final' || !j.isHead)
-      .map((j) => ({
-        judgeId: j.id, name: j.name, isHead: j.isHead,
-        total: judgeTotal(scores, r.team.id, j.id),
-      })),
+    judgeScores: state === 'judges'
+      ? anonymizeJudges(MOCK_JUDGES).map((j) => ({
+          judgeId: j.id, label: j.label, isHead: j.isHead,
+          total: judgeTotal(scores, r.team.id, j.id),
+        }))
+      : [],
   }));
+
+  const labelledJudges = anonymizeJudges(MOCK_JUDGES);
 
   return {
     state,
-    rows,
+    // Ở waiting thì board chưa công bố đội nào — mock phải khớp API thật.
+    rows: state === 'waiting' ? [] : rows,
+    revealedTeamIds: state === 'waiting' ? [] : rows.map((r) => r.team.id),
     baremTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0),
-    maxTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0)
-      * MOCK_JUDGES.filter((j) => phase === 'final' || !j.isHead).length,
+    maxTotal: MOCK_CRITERIA.reduce((a, c) => a + c.max, 0) * MOCK_JUDGES.length,
+    judgeCount: MOCK_JUDGES.length,
     heroImageUrl: null,
     bannerImageUrl: null,
     criteria: MOCK_CRITERIA,
-    judges: MOCK_JUDGES.map((j) => ({
-      ...j,
+    judges: labelledJudges.map((j) => ({
+      id: j.id, label: j.label, isHead: j.isHead,
       submitted: new Set(scores.filter((s) => s.judgeId === j.id).map((s) => s.teamId)).size,
     })),
     teamCount: SEEDS.length,
