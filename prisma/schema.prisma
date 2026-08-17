@@ -8,6 +8,7 @@ datasource db {
 }
 
 enum Role {
+  superadmin
   admin
   judge
 }
@@ -82,7 +83,15 @@ model Settings {
 model AuditLog {
   id        String   @id @default(cuid())
   actorId   String?
-  action    String
-  target    String?
+  actorName String?                    // snapshot: user có thể bị xoá sau đó
+  actorRole String?
+  action    String                     // 'team.create', 'score.unlock', …
+  entity    String?                    // 'team' | 'member' | 'judge' | …
+  entityId  String?
+  target    String?                    // tên người-đọc-được của đối tượng
+  detail    String?                    // mô tả ngắn, ví dụ 'maxScore: 10 -> 15'
   createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entity, entityId])
 }
