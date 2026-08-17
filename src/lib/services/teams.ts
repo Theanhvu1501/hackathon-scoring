@@ -5,6 +5,26 @@ export type MemberInput = { name:string; teamRole?:string; photoUrl?:string; org
 export function listTeams() {
   return prisma.team.findMany({ orderBy:{ createdAt:'asc' }, include:{ members:true } });
 }
+
+export type JudgeTeamView = {
+  id: string; name: string; code: string; tag: string | null; logoUrl: string | null;
+  members: { id: string; name: string; teamRole: string | null; photoUrl: string | null;
+             org: string | null; intro: string | null }[];
+};
+
+/** Bản dành cho giám khảo: KHÔNG có email và số điện thoại thành viên. Đó là dữ
+ *  liệu liên hệ của ban tổ chức, không phục vụ việc chấm điểm. */
+export async function getTeamForJudge(id: string): Promise<JudgeTeamView | null> {
+  return prisma.team.findUnique({
+    where: { id },
+    select: {
+      id: true, name: true, code: true, tag: true, logoUrl: true,
+      members: {
+        select: { id: true, name: true, teamRole: true, photoUrl: true, org: true, intro: true },
+      },
+    },
+  });
+}
 export function createTeam(data:{ name:string; code:string; logoUrl?:string; tag?:string }) {
   return prisma.team.create({ data });
 }
