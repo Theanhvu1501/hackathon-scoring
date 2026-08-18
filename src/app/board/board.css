@@ -1,12 +1,11 @@
 /* ============================================================
    Pit wall — public board for Automotive Hackathon 2026.
 
-   Hai màn hình, hai tính cách:
-   · MÀN CHỜ  — nền xanh nhạt phát sáng của site sự kiện, thoáng, êm.
-   · SÂN KHẤU — tấm bảng pit đảo nền indigo đậm. Trong đua xe, tổ kỹ thuật
-     giơ ra một tấm bảng tối với vị trí bằng số cực lớn; đó vừa là vật thể
-     đúng của môn này, vừa là thứ đọc được từ cuối phòng khi chiếu máy chiếu
-     (nền sáng thì màn chiếu loè trắng, số chìm đi).
+   Hai màn hình, một tính cách: nền sáng của site sự kiện chạy suốt.
+   · MÀN CHỜ  — nền xanh nhạt phát sáng, thoáng, êm.
+   · SÂN KHẤU — vẫn nền giấy sáng đó, nhưng cả màn ăn màu theo bục của đội
+     đang chiếu. Độ đọc từ cuối phòng đến từ cỡ chữ và màu bão hoà, không
+     đến từ nền tối.
 
    Namespaced dưới .pitwall để globals.css không đụng vào.
    ============================================================ */
@@ -28,13 +27,6 @@
   --pw-muted-2:#7286A5;
   --pw-line:rgba(11,27,61,.10);
   --pw-paper:#FFFFFF;
-
-  /* mực trên nền tối — sáng hơn hẳn bản trên nền giấy để đủ tương phản */
-  --on-dark:#F2F6FF;
-  --on-dark-2:rgba(211,224,255,.62);
-  --on-dark-3:rgba(211,224,255,.34);
-  --dark-line:rgba(143,180,255,.16);
-  --dark-cell:rgba(143,180,255,.07);
 
   --grad-brand:linear-gradient(90deg,#0047FF 0%,#00A3FF 100%);
   --grad-cross:linear-gradient(90deg,#2037CF 0%,#B97659 48.6%,#F97322 100%);
@@ -117,49 +109,46 @@
 .pw-state.wait{background:rgba(11,27,61,.08);color:var(--pw-muted)}
 @keyframes pw-blink{50%{opacity:.2}}
 
-/* Bản trên nền tối: cùng bố cục, đổi mực và bỏ kính mờ trắng. */
-.pw-strip.on-dark{
-  background:rgba(11,27,61,.5);
-  border-bottom:1px solid var(--dark-line);
-  box-shadow:none;
-}
-.pw-strip.on-dark .pw-ident b{color:var(--on-dark)}
-.pw-strip.on-dark .pw-ident span{color:var(--on-dark-2)}
-
 /* ============================================================
-   SÂN KHẤU CÔNG BỐ — thiết kế cho MÀN HÌNH DỌC (1080×1920)
-   Một đội chiếm cả màn và ở nguyên đó tới lần công bố kế tiếp.
-   Dọc là mặc định; ngang là trường hợp phụ ở cuối khối này.
+   SÂN KHẤU CÔNG BỐ — MÀN HÌNH DỌC (1080×1920), NỀN SÁNG
+   Bảng pit ban ngày: nền giấy sáng, cả màn ăn một màu theo bục nên
+   mỗi lần đổi đội là cả phòng thấy màn hình đổi màu.
+
+   Chia màn theo thứ tự người ta nhìn: nửa trên là hạng + đội (xem
+   một giây là xong), nửa dưới là phiếu ban giám khảo — phần được
+   đọc lâu nhất nên được chia nhiều chỗ nhất và chữ to nhất.
    ============================================================ */
-/* Wrapper chỉ để .pw-login / .pw-mockflag lấy được token màu — nền sáng của
-   .pitwall phải tắt đi, sân khấu tối tự lo phần nền. */
+/* Wrapper chỉ để .pw-login / .pw-mockflag lấy được token màu; nền do
+   .pw-stage tự lo vì nó đổi theo hạng. */
 .pitwall.is-stage{background:none}
 
 .pw-stage{
   position:relative;min-height:100vh;
   display:flex;flex-direction:column;
-  font-family:var(--pw-ui);color:var(--on-dark);
+  font-family:var(--pw-ui);color:var(--pw-ink);
   background:
-    radial-gradient(120% 60% at 50% 2%, rgba(66,72,193,.46), transparent 66%),
-    radial-gradient(110% 55% at 50% 100%, var(--stage-glow,rgba(0,163,255,.22)), transparent 64%),
-    linear-gradient(178deg,#1F225B 0%,#132048 48%,#0B1B3D 100%);
+    radial-gradient(130% 46% at 50% -2%, var(--acc-tint,rgba(0,163,255,.16)), transparent 70%),
+    radial-gradient(80% 34% at 4% 34%, rgba(0,163,255,.13), transparent 64%),
+    radial-gradient(90% 34% at 96% 26%, rgba(0,71,255,.09), transparent 62%),
+    linear-gradient(180deg,#F1F8FF 0%,#FFFFFF 46%,#F6FBFF 100%);
 }
-/* Vạch kẻ dọc mảnh như mặt bảng pit kim loại — rất mờ, chỉ để mặt phẳng không
-   phẳng lì. */
+/* Vạch dọc mảnh của mặt bảng pit — trên nền sáng phải mờ hơn nữa, chỉ đủ
+   để mặt phẳng không phẳng lì. */
 .pw-stage::before{
   content:"";position:absolute;inset:0;pointer-events:none;
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 76px);
+  background:repeating-linear-gradient(90deg,rgba(11,27,61,.032) 0 1px,transparent 1px 76px);
 }
 .pw-stage > *{position:relative;z-index:1}
 
-/* ---- Nửa trên: hạng + đội ---- */
-/* Trên màn dọc mắt đi từ trên xuống, nên căn giữa trục dọc và xếp một cột. */
+/* ---- Nửa trên: hạng + đội ----
+   flex:0 0 auto — nửa trên lấy đúng phần nó cần, chỗ thừa dồn hết xuống
+   phiếu giám khảo bên dưới. */
 .pw-hero{
-  flex:1 1 auto;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(10px,1.6vh,26px);
+  flex:0 0 auto;
+  display:flex;flex-direction:column;align-items:center;
+  gap:clamp(6px,1vh,16px);
   text-align:center;
-  padding:clamp(20px,3vh,44px) var(--pw-pad);
+  padding:clamp(14px,2.4vh,34px) var(--pw-pad) clamp(12px,2vh,26px);
 }
 
 .pw-rank-k{
@@ -172,10 +161,10 @@
 .pw-rank{
   display:block;
   font-family:var(--pw-disp);font-weight:700;
-  font-size:min(34vw,42vh);line-height:.8;letter-spacing:-.05em;
+  font-size:min(29vw,27vh);line-height:.82;letter-spacing:-.05em;
   font-variant-numeric:tabular-nums;
   background:var(--acc);-webkit-background-clip:text;background-clip:text;color:transparent;
-  filter:drop-shadow(0 22px 52px var(--acc-shadow,rgba(0,0,0,.45)));
+  filter:drop-shadow(0 20px 40px var(--acc-shadow,rgba(11,27,61,.22)));
 }
 
 /* ---- Chi tiết ký: thang vị trí, nằm ngang dưới con số ------------------
@@ -186,145 +175,177 @@
   display:flex;align-items:flex-end;justify-content:center;
   gap:clamp(8px,1.3vw,18px);
   /* Con số có phần bụng chữ chìa xuống, thang phải lùi ra không thì dính vào. */
-  margin-top:clamp(10px,1.8vh,26px);
+  margin-top:clamp(8px,1.4vh,20px);
 }
-.pw-tick{display:flex;flex-direction:column;align-items:center;gap:8px}
+.pw-tick{display:flex;flex-direction:column;align-items:center;gap:7px}
 .pw-tick i{
-  display:block;width:clamp(4px,.6vw,8px);height:clamp(18px,2.2vh,32px);
-  border-radius:999px;background:rgba(211,224,255,.22);
+  display:block;width:clamp(4px,.6vw,8px);height:clamp(16px,2vh,30px);
+  border-radius:999px;background:rgba(11,27,61,.16);
   transition:height .35s cubic-bezier(.22,1,.36,1),background .35s,width .35s;
 }
 .pw-tick b{
   font-family:var(--pw-data);font-weight:400;
-  font-size:clamp(10px,1vw,16px);color:rgba(211,224,255,.22);
+  font-size:clamp(10px,1vw,16px);color:rgba(11,27,61,.28);
 }
-.pw-tick.done i{background:rgba(211,224,255,.72)}
-.pw-tick.done b{color:var(--on-dark-2)}
+.pw-tick.done i{background:rgba(11,27,61,.42)}
+.pw-tick.done b{color:var(--pw-muted)}
 .pw-tick.now i{
-  width:clamp(8px,1.1vw,14px);height:clamp(34px,4.2vh,58px);
-  background:var(--acc-solid);box-shadow:0 0 22px -1px var(--acc-solid);
+  width:clamp(8px,1.1vw,14px);height:clamp(30px,3.8vh,52px);
+  background:var(--acc-solid);box-shadow:0 6px 18px -4px var(--acc-shadow,rgba(11,27,61,.3));
 }
 .pw-tick.now b{color:var(--acc-solid);font-weight:700}
 
-/* ---- Đội ---- */
+/* ---- Đội ----
+   Logo nằm cạnh tên chứ không nằm trên: một dòng nhận diện thay vì ba, phần
+   chiều cao tiết kiệm được đi thẳng xuống phiếu giám khảo. */
 .pw-team{
-  display:flex;flex-direction:column;align-items:center;
-  gap:clamp(6px,.9vh,14px);max-width:min(92vw,1000px);
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-areas:
+    "logo name"
+    "logo tag";
+  align-items:center;
+  column-gap:clamp(14px,2.2vw,32px);row-gap:clamp(2px,.5vh,8px);
+  margin-top:clamp(10px,1.8vh,28px);
+  max-width:min(94vw,1400px);text-align:left;
 }
+.pw-team:not(:has(.pw-team-tag)){grid-template-areas:"logo name"}
 .pw-team-logo{
-  width:clamp(72px,13vw,168px);height:clamp(72px,13vw,168px);
+  grid-area:logo;
+  width:clamp(64px,10.5vw,140px);height:clamp(64px,10.5vw,140px);
   border-radius:var(--r-lg);object-fit:cover;
-  border:1px solid var(--dark-line);background:rgba(255,255,255,.06);
-  box-shadow:0 24px 60px -30px rgba(0,0,0,.7);
+  border:1px solid rgba(11,27,61,.08);background:#fff;
+  box-shadow:0 18px 40px -22px rgba(3,78,162,.6);
 }
 .pw-team-name{
+  grid-area:name;
   font-family:var(--pw-disp);font-weight:700;text-transform:uppercase;
-  font-size:min(8vw,7vh);line-height:.98;letter-spacing:-.02em;
-  color:var(--on-dark);overflow-wrap:anywhere;
+  font-size:min(7.4vw,6.4vh);line-height:1;letter-spacing:-.02em;
+  color:var(--pw-navy);overflow-wrap:anywhere;
 }
 .pw-team-tag{
-  font-size:clamp(14px,1.7vw,24px);color:var(--on-dark-2);line-height:1.45;
+  grid-area:tag;
+  font-size:clamp(14px,1.7vw,24px);color:var(--pw-muted);line-height:1.4;
   max-width:44ch;
 }
+/* Tổng điểm là một thông tin khác với phần nhận diện đội, nên nó đứng riêng
+   trên một tấm thẻ trắng có gạch màu — cũng là cầu nối sang bảng phiếu. */
 .pw-team-total{
-  display:flex;align-items:baseline;gap:12px;
-  /* Tách khỏi cụm logo–tên–tagline: điểm là một thông tin khác, không phải
-     dòng thứ tư của phần nhận diện đội. */
-  margin-top:clamp(10px,2vh,32px);
+  grid-column:1/-1;justify-self:center;
+  display:flex;align-items:baseline;justify-content:center;gap:clamp(8px,1.2vw,16px);
+  margin-top:clamp(10px,1.8vh,28px);
+  padding:clamp(8px,1.2vh,16px) clamp(18px,2.6vw,36px);
+  border-radius:999px;background:#fff;
+  border:1px solid rgba(11,27,61,.07);
+  box-shadow:0 18px 40px -30px rgba(3,78,162,.7);
 }
 .pw-team-total b{
   font-family:var(--pw-disp);font-weight:700;
-  font-size:min(9vw,6.5vh);line-height:1;font-variant-numeric:tabular-nums;
+  font-size:min(7.6vw,5.4vh);line-height:1;font-variant-numeric:tabular-nums;
   background:var(--acc);-webkit-background-clip:text;background-clip:text;color:transparent;
 }
 .pw-team-total span{
-  font-family:var(--pw-data);font-size:clamp(12px,1.4vw,20px);color:var(--on-dark-2);
+  font-family:var(--pw-data);font-size:clamp(12px,1.4vw,20px);color:var(--pw-muted-2);
 }
 
-/* ---- Nửa dưới: phiếu ban giám khảo, dạng danh sách có thanh ------------
-   Đúng dạng bảng chi tiết ban đầu: tên trái, điểm phải, thanh chạy theo tỉ
-   lệ trên barem của MỘT giám khảo. Trên màn dọc, danh sách dọc đọc nhanh
-   hơn một lưới ô — mắt chỉ chạy một đường. */
+/* ---- Nửa dưới: phiếu ban giám khảo ------------------------------------
+   Băng trắng chạy hết bề ngang, flex:1 nên nó ăn toàn bộ chỗ thừa của màn —
+   dòng phiếu giãn ra và chữ to gấp rưỡi bản cũ. Gạch màu trên đầu băng lấy
+   đúng màu bục của đội đang chiếu. */
 .pw-judges{
-  flex:0 0 auto;
-  border-top:1px solid var(--dark-line);
-  background:rgba(11,27,61,.34);
+  flex:1 1 auto;
+  display:flex;flex-direction:column;
+  position:relative;
+  background:linear-gradient(180deg,#FFFFFF 0%,#F7FBFF 100%);
+  border-top:1px solid rgba(11,27,61,.07);
+  box-shadow:0 -24px 60px -46px rgba(3,78,162,.75);
   /* Đệm dưới phải đủ để nút "Ban tổ chức · Đăng nhập" (fixed, góc phải dưới)
      không đè lên dòng phiếu cuối. */
-  padding:clamp(14px,2vh,28px) var(--pw-pad) clamp(34px,5vh,68px);
+  padding:clamp(14px,2vh,26px) var(--pw-pad) clamp(34px,4.6vh,64px);
+}
+.pw-judges::before{
+  content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--acc);
 }
 .pw-judges-h{
   display:flex;align-items:baseline;justify-content:space-between;gap:12px;
-  padding-bottom:clamp(8px,1.2vh,14px);margin-bottom:clamp(6px,1vh,12px);
-  border-bottom:1px solid var(--dark-line);
+  padding-bottom:clamp(8px,1.2vh,14px);margin-bottom:clamp(4px,.8vh,10px);
+  border-bottom:1px solid rgba(11,27,61,.08);
 }
 .pw-judges-h .k{
   font-family:var(--pw-disp);font-weight:700;
-  font-size:clamp(12px,1.3vw,20px);letter-spacing:.24em;text-transform:uppercase;
-  color:var(--on-dark-2);
+  font-size:clamp(13px,1.5vw,24px);letter-spacing:.22em;text-transform:uppercase;
+  color:var(--pw-navy);
 }
 .pw-judges-h .n{
-  font-family:var(--pw-data);font-size:clamp(11px,1.15vw,17px);color:var(--on-dark-3);
+  font-family:var(--pw-data);font-size:clamp(11px,1.2vw,19px);color:var(--pw-muted-2);
 }
 
-.pw-jlist{display:flex;flex-direction:column}
+/* Mỗi dòng là một ô cao bằng nhau chia hết chỗ thừa của băng (flex:1 1 0),
+   nội dung căn giữa ô. Nhờ vậy vạch phân dòng nằm đều tăm tắp và danh sách
+   luôn lấp đầy màn dù có 3 hay 7 giám khảo. */
+.pw-jlist{flex:1 1 auto;display:flex;flex-direction:column}
 .pw-jrow{
+  /* 1 0 auto: được giãn ra để lấp màn, nhưng không bao giờ co dưới chiều cao
+     thật của dòng — co lại là chữ đè lên thanh tỉ lệ trên màn hẹp. */
+  flex:1 0 auto;
   display:grid;grid-template-columns:minmax(0,1fr) auto;
-  align-items:baseline;column-gap:14px;row-gap:clamp(8px,1.1vh,14px);
-  padding:clamp(9px,1.25vh,17px) 0;
-  border-bottom:1px solid rgba(143,180,255,.08);
+  align-items:baseline;align-content:center;
+  column-gap:clamp(12px,1.6vw,22px);row-gap:clamp(9px,1.2vh,16px);
+  padding:clamp(9px,1.2vh,18px) 0;
+  border-bottom:1px solid rgba(11,27,61,.06);
 }
 .pw-jrow:last-child{border-bottom:0}
-/* Từ 8 giám khảo trở lên, danh sách dài hơn nửa màn — bóp dòng lại để nửa
-   trên vẫn còn chỗ cho con số hạng. */
-.pw-jlist.is-dense .pw-jrow{padding:clamp(6px,.85vh,12px) 0;row-gap:clamp(7px,.85vh,11px)}
-.pw-jlist.is-dense .pw-jrow .nm{font-size:clamp(13px,1.35vw,20px)}
-.pw-jlist.is-dense .pw-jrow .val{font-size:clamp(17px,1.9vw,27px)}
-.pw-jlist.is-dense .pw-jrow .tr{height:4px}
+/* Từ 8 giám khảo trở lên, một cột dọc thành ra dòng bé tí — chia hai cột để
+   chữ giữ nguyên cỡ. */
+.pw-jlist.is-dense{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  column-gap:clamp(24px,4vw,64px);align-content:space-evenly;
+}
+.pw-jlist.is-dense .pw-jrow{flex:none}
 .pw-jrow .nm{
   display:flex;align-items:center;gap:10px;
-  font-size:clamp(14px,1.6vw,24px);letter-spacing:.02em;color:var(--on-dark);
+  font-weight:600;font-size:clamp(17px,2.4vw,36px);letter-spacing:0;color:var(--pw-navy);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .pw-jrow .role{
   font-family:var(--pw-disp);font-style:normal;font-weight:700;
-  font-size:clamp(9px,.85vw,13px);letter-spacing:.14em;text-transform:uppercase;
-  color:var(--pw-orange-lt);
-  border:1px solid rgba(249,115,34,.36);border-radius:999px;
-  padding:3px 9px 2px;flex:0 0 auto;
+  font-size:clamp(9px,.9vw,14px);letter-spacing:.14em;text-transform:uppercase;
+  color:#fff;background:var(--grad-warm);
+  border-radius:999px;padding:4px 10px 3px;flex:0 0 auto;
+  box-shadow:0 8px 18px -10px rgba(249,115,34,.9);
 }
 .pw-jrow .val{
   font-family:var(--pw-data);font-weight:500;font-variant-numeric:tabular-nums;
-  font-size:clamp(19px,2.3vw,34px);line-height:1;color:var(--on-dark);
+  font-size:clamp(23px,3.3vw,52px);line-height:1;color:var(--pw-navy);
   white-space:nowrap;
 }
 .pw-jrow .val small{
-  font-weight:400;font-size:.5em;color:var(--on-dark-3);margin-left:5px;
+  font-weight:400;font-size:.44em;color:var(--pw-muted-2);margin-left:6px;
 }
 /* Thanh tỉ lệ trên barem của một giám khảo, không phải trên điểm cao nhất ở
    đây — 7/100 phải trông đúng là 7/100. */
 .pw-jrow .tr{
-  grid-column:1/-1;height:5px;border-radius:999px;
-  /* Nền track phải nhìn thấy được: chỉ thấy phần đã tô thì nó đọc như một
-     cái gạch chân, không phải một tỉ lệ. */
-  background:rgba(143,180,255,.22);
-  box-shadow:inset 0 0 0 1px rgba(143,180,255,.10);
+  grid-column:1/-1;height:clamp(8px,1vh,14px);border-radius:999px;
+  background:rgba(11,27,61,.075);
+  box-shadow:inset 0 0 0 1px rgba(11,27,61,.05);
   overflow:hidden;
 }
 .pw-jrow .tr i{
   display:block;height:100%;border-radius:999px;background:var(--acc);
+  box-shadow:0 4px 14px -6px var(--acc-shadow,rgba(11,27,61,.35));
   transition:width .5s cubic-bezier(.22,1,.36,1);
 }
 /* Chưa chấm là một trạng thái, không phải điểm 0 — nói bằng chữ, để mờ, và
    không bao giờ in số. */
-.pw-jrow.is-none .nm,.pw-jrow.is-none .val{color:var(--on-dark-3)}
-.pw-jrow.is-none .val{font-family:var(--pw-ui);font-size:clamp(12px,1.3vw,19px)}
+.pw-jrow.is-none .nm,.pw-jrow.is-none .val{color:var(--pw-muted-2)}
+.pw-jrow.is-none .val{font-family:var(--pw-ui);font-size:clamp(13px,1.4vw,21px)}
 
 /* ---- Nhịp vào: bảng pit được giơ lên, không phải hiện ra một cục ---- */
 .pw-stage.pw-enter .pw-rank-k{animation:pw-rise .5s ease both}
 .pw-stage.pw-enter .pw-rank{animation:pw-plate .66s cubic-bezier(.22,1,.36,1) both .04s}
 .pw-stage.pw-enter .pw-ladder{animation:pw-rise .5s ease both .2s}
-.pw-stage.pw-enter .pw-team{animation:pw-rise .62s cubic-bezier(.22,1,.36,1) both .26s}
+.pw-stage.pw-enter .pw-team,
+.pw-stage.pw-enter .pw-team-total{animation:pw-rise .62s cubic-bezier(.22,1,.36,1) both .26s}
 .pw-stage.pw-enter .pw-judges-h{animation:pw-rise .5s ease both .36s}
 .pw-stage.pw-enter .pw-jrow{
   animation:pw-rise .46s cubic-bezier(.22,1,.36,1) both;
@@ -340,23 +361,22 @@
   .pw-hero{
     flex-direction:row;justify-content:center;align-items:center;
     gap:clamp(28px,4vw,72px);text-align:left;
+    padding-top:clamp(12px,2vh,26px);padding-bottom:clamp(12px,2vh,26px);
   }
   .pw-hero-rank{display:flex;flex-direction:column;align-items:center;gap:10px}
-  /* Nửa trên phải nhường chỗ, không thì dòng phiếu cuối tràn khỏi màn. */
-  .pw-hero{padding-top:clamp(12px,2vh,26px);padding-bottom:clamp(12px,2vh,26px)}
   .pw-rank{font-size:min(15vw,25vh)}
-  .pw-team{gap:clamp(4px,.7vh,10px)}
+  .pw-team{margin-top:0}
   .pw-team-logo{width:clamp(56px,7vw,104px);height:clamp(56px,7vw,104px)}
-  .pw-team-total{margin-top:clamp(6px,1.2vh,16px)}
-  .pw-team{align-items:flex-start;text-align:left}
-  .pw-team-name{font-size:min(4.6vw,8.5vh)}
-  .pw-team-total b{font-size:min(4vw,7vh)}
+  .pw-team-name{font-size:min(4.4vw,8vh)}
+  .pw-team-total{margin-top:clamp(8px,1.4vh,18px)}
+  .pw-team-total b{font-size:min(3.6vw,6vh)}
   /* KHÔNG cắt danh sách. Chia cột để nó thấp lại thay vì overflow:hidden —
      cắt mất mấy dòng phiếu là làm sai dữ liệu, không phải làm gọn giao diện. */
   .pw-jlist{
     display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
-    column-gap:clamp(24px,4vw,64px);
+    column-gap:clamp(24px,4vw,64px);align-content:space-evenly;
   }
+  .pw-jlist .pw-jrow{flex:none}
   .pw-jlist.is-dense{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
@@ -446,13 +466,6 @@
   transition:color .15s,border-color .15s;
 }
 .pw-login:hover{color:var(--pw-blue);border-color:rgba(0,71,255,.45)}
-/* Trên sân khấu tối, nút đăng nhập phải lùi vào nền chứ không phải một vệt
-   trắng nằm cạnh con số hạng. */
-.pitwall.is-stage .pw-login{
-  color:var(--on-dark-2);border-color:var(--dark-line);
-  background:rgba(11,27,61,.55);box-shadow:none;
-}
-.pitwall.is-stage .pw-login:hover{color:var(--on-dark);border-color:rgba(143,180,255,.4)}
 .pw-mockflag{
   position:fixed;bottom:16px;left:16px;z-index:40;
   font-family:var(--pw-pixel);font-size:9px;letter-spacing:.05em;
@@ -462,20 +475,19 @@
 .pitwall :focus-visible{
   outline:3px solid var(--pw-blue);outline-offset:3px;border-radius:6px;
 }
-.pw-stage :focus-visible{outline-color:var(--pw-cyan)}
 
 /* ---------- Narrow ---------- */
 @media(max-width:860px){
-  /* Thang vị trí nằm ngang phía trên, nhường hết chiều ngang cho con số. */
-  .pw-stage-body{grid-template-columns:minmax(0,1fr);row-gap:16px}
-  .pw-ladder{
-    flex-direction:row;align-items:center;flex-wrap:wrap;
-    border-right:0;border-bottom:1px solid var(--dark-line);
-    padding:0 0 12px;
+  .pw-ladder{flex-wrap:wrap;row-gap:8px}
+  /* Trên điện thoại, logo cạnh tên làm tên chỉ còn vài chục pixel — xếp lại
+     thành một cột như cũ. */
+  .pw-team{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"logo" "name" "tag";
+    justify-items:center;text-align:center;row-gap:8px;
   }
-  .pw-tick{flex-direction:row-reverse;gap:5px}
-  .pw-slate-top{grid-template-columns:minmax(0,1fr);row-gap:12px}
-  .pw-team-logo{width:56px;height:56px}
+  .pw-team-logo{width:64px;height:64px}
+  .pw-team-name{font-size:clamp(26px,8vw,44px)}
 }
 @media(max-width:720px){
   .pw-strip{flex-wrap:wrap;row-gap:12px}

@@ -9,19 +9,20 @@ export type StageRow = {
 };
 
 /** Màu nhấn theo bục: hạng nhất lấy cam FPT, hạng nhì/ba lấy hai xanh thương
- *  hiệu, ngoài bục thì trung tính. Đây là thông tin (trong bục / ngoài bục),
- *  không phải trang trí. */
+ *  hiệu, ngoài bục lấy xanh ngọc. Đây là thông tin (trong bục / ngoài bục),
+ *  không phải trang trí. Bộ màu đã hạ độ sáng để ăn được nền giấy sáng —
+ *  chữ gradient trên nền trắng phải đủ đậm mới đọc được từ cuối phòng. */
 function accentOf(rank: number) {
   if (rank === 1) {
-    return { acc: 'linear-gradient(92deg,#FFB166 0%,#FF7A1F 100%)', solid: '#FFA054', shadow: 'rgba(249,115,34,.34)', glow: 'rgba(249,115,34,.24)' };
+    return { acc: 'linear-gradient(96deg,#FFA224 0%,#F0540A 100%)', solid: '#EE6009', shadow: 'rgba(238,96,9,.34)', tint: 'rgba(249,115,34,.20)' };
   }
   if (rank === 2) {
-    return { acc: 'linear-gradient(92deg,#BFE6FF 0%,#4FBBFF 100%)', solid: '#7FD3FF', shadow: 'rgba(0,163,255,.30)', glow: 'rgba(0,163,255,.22)' };
+    return { acc: 'linear-gradient(96deg,#25BCFF 0%,#0057F5 100%)', solid: '#0079EE', shadow: 'rgba(0,121,238,.32)', tint: 'rgba(0,163,255,.20)' };
   }
   if (rank === 3) {
-    return { acc: 'linear-gradient(92deg,#C6D6FF 0%,#6E93FF 100%)', solid: '#8FB4FF', shadow: 'rgba(0,71,255,.30)', glow: 'rgba(0,71,255,.20)' };
+    return { acc: 'linear-gradient(96deg,#7C9BFF 0%,#3A2FC4 100%)', solid: '#4248C1', shadow: 'rgba(66,72,193,.32)', tint: 'rgba(110,147,255,.20)' };
   }
-  return { acc: 'linear-gradient(92deg,#DCE6FF 0%,#9FB4DC 100%)', solid: '#B9C9EA', shadow: 'rgba(11,27,61,.42)', glow: 'rgba(66,72,193,.20)' };
+  return { acc: 'linear-gradient(96deg,#2ED3B7 0%,#0E8FA8 100%)', solid: '#0E9AAE', shadow: 'rgba(14,154,174,.30)', tint: 'rgba(46,211,183,.18)' };
 }
 
 /**
@@ -61,7 +62,7 @@ export default function RevealStage({
         ['--acc' as any]: a.acc,
         ['--acc-solid' as any]: a.solid,
         ['--acc-shadow' as any]: a.shadow,
-        ['--stage-glow' as any]: a.glow,
+        ['--acc-tint' as any]: a.tint,
       }}
     >
       {header}

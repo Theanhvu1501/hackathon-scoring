@@ -96,7 +96,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
       return (
         <div key="wait" className={'pitwall' + enter}>
           <AmbientNet />
-          <Strip dark={false} label="CHỜ CÔNG BỐ" live={false} />
+          <Strip label="CHỜ CÔNG BỐ" live={false} />
           <div className="pw-wait">
             <div className="pw-wait-in">
               <span className="pw-chip">AUTOMOTIVE HACKATHON / 2026</span>
@@ -120,7 +120,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
       return (
         <div key="stage-empty" className={'pitwall' + enter}>
           <AmbientNet />
-          <Strip dark={false} label="CHỜ CÔNG BỐ" live={false} />
+          <Strip label="CHỜ CÔNG BỐ" live={false} />
           <p className="pw-empty">Chưa có đội nào được công bố.</p>
           <StaffLink />
         </div>
@@ -128,7 +128,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
     }
 
     // Bọc trong .pitwall để .pw-login / .pw-mockflag vẫn lấy được token màu của
-    // board; .is-stage bỏ nền sáng đi để sân khấu tối tự lo phần nền.
+    // board; .is-stage tắt nền chung đi vì sân khấu đổi màu theo hạng của đội.
     return (
       <div key={'stage-' + row.team.id} className="pitwall is-stage">
         {row.rank === 1 && entering && <Confetti fire={celebrate} />}
@@ -138,7 +138,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
           revealedRanks={rows.map((r) => r.rank)}
           maxTotal={d.maxTotal}
           baremTotal={d.baremTotal}
-          header={<Strip dark label="ĐANG CÔNG BỐ" live />}
+          header={<Strip label="ĐANG CÔNG BỐ" live />}
         />
         <StaffLink />
         {mock && <span className="pw-mockflag">MOCK DATA</span>}
@@ -149,7 +149,7 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
   if (!data) {
     return (
       <div className="pitwall">
-        <Strip dark={false} label="ĐANG KẾT NỐI" live={false} />
+        <Strip label="ĐANG KẾT NỐI" live={false} />
         <p className="pw-empty">Đang kết nối bảng điểm…</p>
         <StaffLink />
       </div>
@@ -164,9 +164,9 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
   );
 }
 
-function Strip({ dark, label, live }: { dark: boolean; label: string; live: boolean }) {
+function Strip({ label, live }: { label: string; live: boolean }) {
   return (
-    <header className={'pw-strip' + (dark ? ' on-dark' : '')}>
+    <header className="pw-strip">
       <div className="pw-mark">A</div>
       <div className="pw-ident">
         <b>{EVENT}</b>
