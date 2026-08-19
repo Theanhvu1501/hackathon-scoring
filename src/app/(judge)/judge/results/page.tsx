@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { fetcher } from '@/lib/ui';
+import { awardOf } from '@/lib/award';
 
 const STATE_LABEL: Record<string, string> = {
   waiting: 'Chưa công bố',
@@ -31,14 +32,19 @@ export default function Results() {
     <div className="card"><table>
       <thead>
         <tr>
-          <th>#</th><th>Đội</th>
+          <th style={{ width: 150 }}>Giải</th><th>Đội</th>
           <th style={{ textAlign: 'right' }}>Tổng điểm</th>
           <th style={{ textAlign: 'right' }}>Trên board</th>
         </tr>
       </thead>
       <tbody>{data.rows.map((r: any) => (
         <tr key={r.team.id}>
-          <td className="tnum">{r.tie ? 'T' + r.rank : r.rank}</td>
+          <td>
+            <b>{awardOf(r.rank).full}</b>
+            <small style={{ display: 'block', color: 'var(--muted-2)' }}>
+              {r.tie ? 'đồng ' : ''}hạng {r.rank}
+            </small>
+          </td>
           <td>
             <div className="tcell">
               <span className="team-ava" style={{ background: 'linear-gradient(135deg,#f37021,#ff9730)' }}>{r.team.code}</span>

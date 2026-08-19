@@ -156,21 +156,32 @@
   font-size:clamp(13px,1.6vw,26px);letter-spacing:.4em;text-transform:uppercase;
   color:var(--acc-solid);
 }
-/* Toàn bộ lý do màn hình này tồn tại: con số đọc được từ cuối phòng. Trên màn
-   dọc chiều rộng là tài nguyên hiếm nhất, nên số ăn theo vw. */
-.pw-rank{
-  display:block;
-  font-family:var(--pw-disp);font-weight:700;
-  font-size:min(29vw,27vh);line-height:.82;letter-spacing:-.05em;
-  font-variant-numeric:tabular-nums;
+/* Toàn bộ lý do màn hình này tồn tại: TÊN GIẢI đọc được từ cuối phòng. Trên màn
+   dọc chiều rộng là tài nguyên hiếm nhất, nên cỡ chữ ăn theo vw và chốt bằng
+   nowrap — các tên giải là chuỗi cố định nên cỡ đã tính cho chuỗi dài nhất
+   ("TRIỂN VỌNG" + số), không có ca nào tràn. */
+.pw-award{
+  display:flex;align-items:baseline;justify-content:center;
+  gap:clamp(6px,1.1vw,18px);max-width:96vw;
+  font-family:var(--pw-disp);font-weight:700;text-transform:uppercase;
+  /* 1.26 chứ không phải .82 như hồi còn là con số: chữ hoa tiếng Việt chồng
+     hai dấu (Ể) cao vượt thân chữ và dấu nặng (Ọ) thò xuống dưới — ép
+     line-height xuống là dấu đâm vào dòng chữ trên và thang giải bên dưới. */
+  font-size:min(13.5vw,12vh);line-height:1.26;letter-spacing:-.03em;
   background:var(--acc);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 20px 40px var(--acc-shadow,rgba(11,27,61,.22)));
 }
+.pw-award em{font-style:normal;white-space:nowrap}
+/* Số giải Triển vọng — to hơn phần chữ vì đó là thứ phân biệt bốn giải với nhau. */
+.pw-award b{font-size:1.2em;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+/* Quán quân / Á quân không có số bám sau nên còn chỗ: cho to hơn hẳn, thứ bậc
+   phải cảm được ngay từ cỡ chữ chứ không chờ đọc. */
+.pw-award.is-named{font-size:min(16.5vw,15vh)}
 
-/* ---- Chi tiết ký: thang vị trí, nằm ngang dưới con số ------------------
-   Mỗi đội một vạch, xếp từ hạng nhất bên trái. Đã công bố thì đặc, đang
-   chiếu thì cao và sáng hơn hẳn. Công bố từ hạng bét lên thì thang đầy dần
-   từ phải sang — cả phòng thấy còn mấy đội nữa mà không cần chữ nào. */
+/* ---- Chi tiết ký: thang giải, nằm ngang dưới tên giải ------------------
+   Mỗi đội một vạch dán nhãn giải (QQ / ÁQ / TV1…), xếp từ quán quân bên trái.
+   Đã công bố thì đặc, đang chiếu thì cao và sáng hơn hẳn. Công bố từ hạng bét
+   lên thì thang đầy dần từ phải sang — cả phòng thấy còn mấy giải nữa. */
 .pw-ladder{
   display:flex;align-items:flex-end;justify-content:center;
   gap:clamp(8px,1.3vw,18px);
@@ -184,8 +195,8 @@
   transition:height .35s cubic-bezier(.22,1,.36,1),background .35s,width .35s;
 }
 .pw-tick b{
-  font-family:var(--pw-data);font-weight:400;
-  font-size:clamp(10px,1vw,16px);color:rgba(11,27,61,.28);
+  font-family:var(--pw-data);font-weight:400;white-space:nowrap;
+  font-size:clamp(10px,.95vw,16px);letter-spacing:.02em;color:rgba(11,27,61,.28);
 }
 .pw-tick.done i{background:rgba(11,27,61,.42)}
 .pw-tick.done b{color:var(--pw-muted)}
@@ -342,7 +353,7 @@
 
 /* ---- Nhịp vào: bảng pit được giơ lên, không phải hiện ra một cục ---- */
 .pw-stage.pw-enter .pw-rank-k{animation:pw-rise .5s ease both}
-.pw-stage.pw-enter .pw-rank{animation:pw-plate .66s cubic-bezier(.22,1,.36,1) both .04s}
+.pw-stage.pw-enter .pw-award{animation:pw-plate .66s cubic-bezier(.22,1,.36,1) both .04s}
 .pw-stage.pw-enter .pw-ladder{animation:pw-rise .5s ease both .2s}
 .pw-stage.pw-enter .pw-team,
 .pw-stage.pw-enter .pw-team-total{animation:pw-rise .62s cubic-bezier(.22,1,.36,1) both .26s}
@@ -364,7 +375,8 @@
     padding-top:clamp(12px,2vh,26px);padding-bottom:clamp(12px,2vh,26px);
   }
   .pw-hero-rank{display:flex;flex-direction:column;align-items:center;gap:10px}
-  .pw-rank{font-size:min(15vw,25vh)}
+  .pw-award{font-size:min(6.6vw,13vh)}
+  .pw-award.is-named{font-size:min(8vw,15vh)}
   .pw-team{margin-top:0}
   .pw-team-logo{width:clamp(56px,7vw,104px);height:clamp(56px,7vw,104px)}
   .pw-team-name{font-size:min(4.4vw,8vh)}

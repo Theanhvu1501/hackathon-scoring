@@ -4,6 +4,7 @@ import { fetcher } from '@/lib/ui';
 import ImagePicker from '@/components/ImagePicker';
 import { TeamLogo } from '@/components/Avatar';
 import { useConfirm } from '@/components/ConfirmProvider';
+import { awardOf } from '@/lib/award';
 
 type Row = {
   team: { id: string; name: string; code: string; logoUrl: string | null };
@@ -59,7 +60,7 @@ export default function Publish() {
     catch (e: any) { setErr(e.message); }
   }
 
-  // Hạng bét lên đầu: ban tổ chức xướng tên từ dưới lên.
+  // Giải thấp nhất lên đầu: ban tổ chức xướng tên từ dưới lên.
   const order = rows ? [...rows].sort((a, b) => b.rank - a.rank) : [];
   const done = new Set(st.revealedTeamIds);
   const total = rows?.length ?? 0;
@@ -96,15 +97,15 @@ export default function Publish() {
           <div className="card card-pad">
             <h3 style={{ fontSize: 15, marginBottom: 6 }}>Công bố từng đội</h3>
             <p style={{ fontSize: 12.5, color: 'var(--muted-2)', marginBottom: 14 }}>
-              Sắp sẵn từ hạng bét lên hạng nhất. Ấn <b>Công bố</b> là board chuyển sang đội đó —
-              thứ hạng, tên, logo và điểm từng giám khảo — và giữ nguyên tới lần công bố kế tiếp.
+              Sắp sẵn từ giải thấp nhất lên Quán quân. Ấn <b>Công bố</b> là board chuyển sang đội đó —
+              tên giải, tên đội, logo và điểm từng giám khảo — và giữ nguyên tới lần công bố kế tiếp.
             </p>
 
             <div style={{ overflowX: 'auto' }}>
               <table>
                 <thead>
                   <tr>
-                    <th style={{ width: 62 }}>Hạng</th>
+                    <th style={{ width: 150 }}>Giải</th>
                     <th>Đội</th>
                     <th style={{ textAlign: 'right' }}>Điểm</th>
                     <th style={{ textAlign: 'right' }}>Thao tác</th>
@@ -126,7 +127,14 @@ export default function Publish() {
                     const working = busy === r.team.id;
                     return (
                       <tr key={r.team.id} style={isCurrent ? { background: 'rgba(243,112,33,.06)' } : undefined}>
-                        <td className="tnum"><b>{r.tie ? 'T' : ''}{r.rank}</b></td>
+                        {/* Người điều khiển đọc cột này để biết MC đang xướng giải
+                            nào — nên nó phải là tên giải, thứ hạng chỉ đi kèm. */}
+                        <td>
+                          <b>{awardOf(r.rank).full}</b>
+                          <small style={{ display: 'block', color: 'var(--muted-2)' }}>
+                            {r.tie ? 'đồng ' : ''}hạng {r.rank}
+                          </small>
+                        </td>
                         <td>
                           <div className="tcell">
                             <TeamLogo code={r.team.code} logoUrl={r.team.logoUrl} />
