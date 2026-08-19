@@ -1,6 +1,5 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import Confetti from '@/components/Confetti';
 import AmbientNet from '@/components/board/AmbientNet';
@@ -24,9 +23,6 @@ function screenOf(d: any): Screen {
 // pw-fade-out duration in board.css, or the old screen snaps away mid-fade.
 const XFADE_MS = 760;
 
-const StaffLink = () => (
-  <Link href="/login" className="pw-login">Ban tổ chức · Đăng nhập ↗</Link>
-);
 
 export default function BoardScreen({ initial, mock }: { initial: any; mock: MockMode }) {
   // Seeded from the server render, so the very first paint is already the real
@@ -86,7 +82,6 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
         // patches the same <div> in place and the enter animation never re-runs.
         <div key="banner" className={'pitwall is-banner' + enter}>
           <img className="pw-banner" src={d.bannerImageUrl} alt="" />
-          <StaffLink />
           {mock && <span className="pw-mockflag">MOCK DATA</span>}
         </div>
       );
@@ -108,7 +103,6 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
               </div>
             </div>
           </div>
-          <StaffLink />
           {mock && <span className="pw-mockflag">MOCK DATA</span>}
         </div>
       );
@@ -122,7 +116,6 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
           <AmbientNet />
           <Strip label="CHỜ CÔNG BỐ" live={false} />
           <p className="pw-empty">Chưa có đội nào được công bố.</p>
-          <StaffLink />
         </div>
       );
     }
@@ -140,7 +133,6 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
           baremTotal={d.baremTotal}
           header={<Strip label="ĐANG CÔNG BỐ" live />}
         />
-        <StaffLink />
         {mock && <span className="pw-mockflag">MOCK DATA</span>}
       </div>
     );
@@ -151,7 +143,6 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
       <div className="pitwall">
         <Strip label="ĐANG KẾT NỐI" live={false} />
         <p className="pw-empty">Đang kết nối bảng điểm…</p>
-        <StaffLink />
       </div>
     );
   }

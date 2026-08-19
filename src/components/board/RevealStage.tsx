@@ -46,8 +46,8 @@ export default function RevealStage({
   header: React.ReactNode;
 }) {
   const a = accentOf(row.rank);
-  const judges = row.judgeScores ?? [];
-  const scored = judges.filter((j) => j.total !== null).length;
+  const judges = (row.judgeScores ?? []).filter((j) => j.total !== null);
+  const scored = judges.length;
   // Thang vị trí chỉ vẽ nổi khi số đội còn đếm được bằng mắt; đông hơn thì một
   // dãy vạch dày đặc không nói được gì, dùng phân số cho gọn.
   const showLadder = teamCount > 0 && teamCount <= 16;
@@ -100,25 +100,24 @@ export default function RevealStage({
         <div className="pw-judges">
           <div className="pw-judges-h">
             <span className="k">Phiếu ban giám khảo</span>
-            <span className="n">{scored}/{judges.length} đã chấm · mỗi phiếu tối đa {baremTotal}</span>
+            <span className="n">{judges.length} phiếu · mỗi phiếu tối đa {baremTotal}</span>
           </div>
           <div className={'pw-jlist' + (judges.length >= 8 ? ' is-dense' : '')}>
             {judges.map((j, i) => (
               <div
                 key={j.judgeId}
-                className={'pw-jrow' + (j.total === null ? ' is-none' : '')}
+                className="pw-jrow"
                 style={{ ['--pw-i' as any]: Math.min(i, 18) }}
               >
                 <span className="nm">
                   {j.label}
-                  {j.isHead && <em className="role">Trưởng BGK</em>}
                 </span>
                 <span className="val">
-                  {j.total === null ? 'chưa chấm' : j.total.toFixed(1)}
-                  {j.total !== null && <small>/ {baremTotal}</small>}
+                  {j.total!.toFixed(1)}
+                  <small>/ {baremTotal}</small>
                 </span>
                 <span className="tr">
-                  <i style={{ width: `${j.total === null ? 0 : pct(j.total)}%` }} />
+                  <i style={{ width: `${pct(j.total!)}%` }} />
                 </span>
               </div>
             ))}
