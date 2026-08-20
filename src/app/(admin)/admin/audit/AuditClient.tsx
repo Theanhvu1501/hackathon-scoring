@@ -69,7 +69,9 @@ export default function AuditClient() {
             </tr>
           </thead>
           <tbody>
-            {!data && <tr><td colSpan={5} style={{ color: 'var(--muted-2)' }}>Đang tải…</td></tr>}
+            {!data && (
+              <tr><td colSpan={5}><div className="loading-box sm"><span className="spin-lg" />Đang tải…</div></td></tr>
+            )}
             {data?.entries.map((e: any) => (
               <tr key={e.id}>
                 <td className="tnum" style={{ whiteSpace: 'nowrap' }}>

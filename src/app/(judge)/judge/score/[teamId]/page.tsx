@@ -78,7 +78,7 @@ export default function Score({ params }: { params: { teamId: string } }) {
     } finally { setBusy(false); }
   }
 
-  if (!team) return <div>Đang tải…</div>;
+  if (!team) return <div className="loading-box"><span className="spin-lg" />Đang tải…</div>;
 
   return (
     <>

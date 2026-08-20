@@ -22,7 +22,7 @@ export default function JudgeTeamDetail({ params }: { params: { id: string } }) 
   }, [params.id]);
 
   if (err) return <div className="card card-pad" style={{ color: 'var(--muted)' }}>Không tải được đội: {err}</div>;
-  if (!team) return <div>Đang tải…</div>;
+  if (!team) return <div className="loading-box"><span className="spin-lg" />Đang tải…</div>;
 
   return (
     <>

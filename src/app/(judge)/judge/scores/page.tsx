@@ -21,7 +21,7 @@ export default function JudgeScores() {
     return () => es.close();
   }, []);
 
-  if (!d) return <div>Đang tải…</div>;
+  if (!d) return <div className="loading-box"><span className="spin-lg" />Đang tải…</div>;
 
   return (
     <>

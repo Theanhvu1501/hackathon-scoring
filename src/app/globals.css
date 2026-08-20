@@ -4,7 +4,7 @@
 
 :root{
   --navy-950:#eaf1fd;   /* subtle input / chip surface */
-  --navy-900:#f3f7ff;   /* page background */
+  --navy-900:#e8eefa;   /* page background — đậm hơn card/khung để khung nổi rõ */
   --navy-850:#ffffff;   /* panel / card top */
   --navy-800:#f5f9ff;   /* panel / card bottom */
   --navy-700:#e8eeff;   /* alt section */
@@ -33,10 +33,7 @@
 html{scroll-behavior:smooth}
 body{
   font-family:Inter,system-ui,sans-serif;
-  background:
-    radial-gradient(1100px 600px at 88% -8%, rgba(243,112,33,.14), transparent 60%),
-    radial-gradient(1000px 700px at 5% 0%, rgba(0,212,255,.12), transparent 55%),
-    var(--navy-900);
+  background:var(--navy-900);
   color:var(--text);
   -webkit-font-smoothing:antialiased;
   min-height:100vh;
@@ -48,7 +45,7 @@ img{max-width:100%;display:block}
 a{color:inherit;text-decoration:none}
 
 /* ---------- App shell ---------- */
-.app{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+.app{display:grid;grid-template-columns:270px 1fr;height:100vh;overflow:hidden}
 .sidebar{
   background:var(--navy-850);
   border-right:1px solid var(--line);
@@ -87,18 +84,28 @@ a{color:inherit;text-decoration:none}
 .side-foot{margin-top:22px;padding:12px 10px;border-top:1px solid var(--line);color:var(--muted-2);font-size:11px;line-height:1.6}
 
 /* ---------- Main ---------- */
-.main{min-width:0;display:flex;flex-direction:column}
+/* Vùng main là một KHUNG bo góc nổi trên nền, tách hẳn khỏi background.
+   Topbar/subbar ghim bằng flex chứ KHÔNG dùng position:sticky: sticky bám theo
+   viewport nên khi cuộn nó sẽ trượt ra khỏi khung bo góc và dính lên mép màn
+   hình. Đổi lại, thanh cuộn nằm trong .content — tức trong khung — thay vì ở
+   mép cửa sổ. */
+.main{
+  min-width:0;display:flex;flex-direction:column;
+  margin:14px;border:1px solid var(--line);border-radius:16px;
+  background:var(--navy-850);box-shadow:var(--shadow);
+  overflow:hidden;   /* cắt góc cho topbar khỏi tràn ra ngoài bo góc */
+}
 .topbar{
   display:flex;align-items:center;justify-content:space-between;gap:16px;
   height:var(--topbar-h);padding:0 24px;border-bottom:1px solid var(--line);
-  background:rgba(255,255,255,.85);backdrop-filter:blur(10px);position:sticky;top:0;z-index:20;
+  background:var(--navy-850);flex:0 0 auto;z-index:20;
 }
 .crumb{font-size:12.5px;color:var(--muted)}
 .crumb b{color:var(--text);font-weight:600}
 .top-actions{display:flex;align-items:center;gap:10px}
 .who{display:flex;align-items:center;gap:9px;font-size:13px}
 .avatar{width:32px;height:32px;border-radius:50%;background:var(--blue);display:grid;place-items:center;font-weight:600;font-size:13px;color:#fff}
-.content{padding:24px;max-width:none;width:100%}
+.content{padding:24px;max-width:none;width:100%;flex:1 1 auto;overflow-y:auto;min-height:0}
 .screen{display:none;animation:fade .35s ease}
 .screen.active{display:block}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -122,7 +129,9 @@ a{color:inherit;text-decoration:none}
 .btn-danger{color:#fff;border-color:transparent;background:var(--red)}
 .btn-danger:hover{background:#c9302f;border-color:transparent}
 
-.card{background:linear-gradient(180deg,var(--navy-850),var(--navy-800));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+/* Card trắng phẳng nằm trên khung cũng trắng, nên viền phải đậm hơn --line
+   một nấc, nếu không nó chìm hẳn vào nền khung. */
+.card{background:var(--navy-850);border:1px solid var(--line-strong);border-radius:var(--radius);box-shadow:var(--shadow)}
 .card-pad{padding:20px}
 .grid{display:grid;gap:16px}
 .stat-row{grid-template-columns:repeat(4,1fr)}
@@ -349,6 +358,7 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
     opacity:0;visibility:hidden;transition:opacity .2s}
   .sidebar-backdrop.open{opacity:1;visibility:visible}
   .topbar .hamburger{display:grid}
+  .main{margin:8px;border-radius:14px}
   .content{padding:16px}
   .subbar{padding:12px 16px 0}
   .topbar{padding:0 14px}
@@ -437,7 +447,7 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 .topbar-title{display:flex;align-items:center;gap:11px;min-width:0}
 .topbar-title .tt-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:rgba(243,112,33,.12);color:var(--orange);font-size:15px;flex:0 0 auto}
 .topbar-title h1{font-family:"Space Grotesk";font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.subbar{display:flex;align-items:center;padding:16px 24px 0;background:transparent}
+.subbar{display:flex;align-items:center;padding:16px 24px 0;background:transparent;flex:0 0 auto}
 .crumb-home{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 8px;border-radius:8px;color:var(--muted);font-size:13px;font-weight:600;transition:.12s}
 .crumb-home:hover{color:var(--orange);background:rgba(243,112,33,.1)}
 
@@ -607,6 +617,20 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 }
 @keyframes spin{to{transform:rotate(360deg)}}
 
+/* Vòng xoay cỡ lớn cho màn chờ cả trang, dùng lại đúng @keyframes spin ở trên. */
+.spin-lg{
+  width:26px;height:26px;flex:0 0 auto;border-radius:50%;
+  border:2.5px solid var(--line-strong);border-top-color:var(--orange);
+  animation:spin .7s linear infinite;
+}
+.loading-box{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  min-height:340px;color:var(--muted-2);font-size:13.5px;
+}
+/* Trong modal hoặc trong ô bảng thì khung chứa vốn đã thấp — 340px sẽ đội modal
+   cao vống lên rồi tụt xuống lúc dữ liệu về. */
+.loading-box.sm{min-height:160px}
+
 .skel{
   display:block;height:12px;border-radius:6px;
   background:linear-gradient(90deg,rgba(23,54,120,.07) 25%,rgba(23,54,120,.13) 37%,rgba(23,54,120,.07) 63%);
@@ -616,5 +640,5 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 @keyframes skel{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
 @media(prefers-reduced-motion:reduce){
-  .spin,.skel{animation-duration:.01ms;animation-iteration-count:1}
+  .spin,.spin-lg,.skel{animation-duration:.01ms;animation-iteration-count:1}
 }

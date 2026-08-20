@@ -21,7 +21,7 @@ export default function Results() {
     es.addEventListener('update', load);
     return () => es.close();
   }, []);
-  if (!data) return <div>Đang tải…</div>;
+  if (!data) return <div className="loading-box"><span className="spin-lg" />Đang tải…</div>;
 
   return (<>
     <div className="page-head" style={{ justifyContent: 'flex-end' }}>

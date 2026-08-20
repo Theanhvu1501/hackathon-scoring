@@ -170,7 +170,7 @@ export default function Judges() {
           onClose={() => { setDetailOf(null); setDetail(null); }}
           footer={<button className="btn" onClick={() => { setDetailOf(null); setDetail(null); }}>Đóng</button>}
         >
-          {!detail ? <div style={{ color: 'var(--muted-2)' }}>Đang tải…</div> : (
+          {!detail ? <div className="loading-box sm"><span className="spin-lg" />Đang tải…</div> : (
             <div style={{ overflowX: 'auto' }}>
               <table>
                 <thead>

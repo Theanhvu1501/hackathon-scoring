@@ -43,7 +43,7 @@ export default function TeamDetail({ params }: { params: { id: string } }) {
     await fetcher('/api/members/' + m.id, { method: 'DELETE' }); load();
   }
 
-  if (!team) return <div className="card card-pad">Đang tải…</div>;
+  if (!team) return <div className="card card-pad"><div className="loading-box"><span className="spin-lg" />Đang tải…</div></div>;
 
   return (
     <>
