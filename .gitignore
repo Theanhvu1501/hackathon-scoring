@@ -9,3 +9,5 @@ prisma/*.db
 
 tsconfig.tsbuildinfo
 next-env.d.ts
+
+.DS_Store

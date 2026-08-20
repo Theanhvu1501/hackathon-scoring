@@ -16,6 +16,9 @@ const ADMIN_NAV = [
 const SUPER_NAV = [
   { href: '/admin/accounts', label: 'Tài khoản quản trị', ic: '⚿' },
   { href: '/admin/audit', label: 'Nhật ký thao tác', ic: '☰' },
+  // Cố ý KHÔNG nằm cạnh 'Điều khiển công bố': trang đó được mở suốt lúc xướng
+  // giải, thêm nút xoá sạch điểm vào cùng chỗ là mời gọi bấm nhầm giữa sự kiện.
+  { href: '/admin/reset', label: 'Sao lưu & đặt lại', ic: '↺' },
 ];
 const JUDGE_NAV = [
   { href: '/judge', label: 'Danh sách đội', ic: '◈' },
@@ -42,6 +45,7 @@ function buildCrumbs(path: string, role: ShellRole): Crumb[] {
     '/admin': 'Tổng quan', '/admin/teams': 'Quản lý đội thi', '/admin/judges': 'Tài khoản BGK',
     '/admin/barem': 'Cấu hình barem', '/admin/publish': 'Điều khiển công bố',
     '/admin/accounts': 'Tài khoản quản trị', '/admin/audit': 'Nhật ký thao tác',
+    '/admin/reset': 'Sao lưu & đặt lại',
     '/judge': 'Danh sách đội', '/judge/results': 'Kết quả', '/judge/scores': 'Điểm ban giám khảo',
   };
   if (path.startsWith('/admin/teams/')) {

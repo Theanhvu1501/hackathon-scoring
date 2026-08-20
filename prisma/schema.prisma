@@ -110,3 +110,19 @@ model AuditLog {
   @@index([createdAt])
   @@index([entity, entityId])
 }
+
+/// Ảnh chụp DỮ LIỆU CHUẨN BỊ (đội, thành viên, ban giám khảo, tiêu chí, banner)
+/// tại một thời điểm, để khôi phục khi có người sửa nhầm trước hoặc trong sự kiện.
+///
+/// CỐ Ý không chứa điểm: điểm là kết quả thi đấu, có vòng đời riêng và được đặt
+/// lại bằng services/reset.ts. Trộn hai thứ vào một bản chụp thì "khôi phục danh
+/// sách đội" sẽ kéo theo việc ghi đè điểm ban giám khảo đang chấm dở.
+model Snapshot {
+  id        String   @id @default(cuid())
+  label     String
+  actorName String?
+  payload   Json
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

@@ -16,6 +16,9 @@ const ACTION_LABEL: Record<string, string> = {
   'score.save': 'Lưu nháp điểm', 'score.submit': 'Nộp điểm', 'score.unlock': 'Mở khoá phiếu chấm',
   'reveal.team': 'Công bố đội', 'reveal.unteam': 'Thu hồi đội', 'reveal.judges': 'Công bố điểm BGK',
   'reveal.reset': 'Reset công bố',
+  'event.reset': 'Đặt lại phần chấm điểm',
+  'snapshot.create': 'Chụp bản chuẩn bị', 'snapshot.restore': 'Khôi phục bản chuẩn bị',
+  'snapshot.delete': 'Xoá bản chụp',
   'settings.hero_image': 'Đổi ảnh màn chiếu', 'settings.banner_image': 'Đổi banner',
 };
 
@@ -23,6 +26,7 @@ const ENTITIES: [string, string][] = [
   ['', 'Tất cả'], ['auth', 'Đăng nhập'], ['team', 'Đội thi'], ['member', 'Thành viên'],
   ['judge', 'Giám khảo'], ['account', 'Tài khoản'], ['criterion', 'Barem'],
   ['score', 'Điểm'], ['reveal', 'Công bố'], ['settings', 'Cấu hình'],
+  ['snapshot', 'Bản chụp'], ['event', 'Đặt lại sự kiện'],
 ];
 
 const ROLE_LABEL: Record<string, string> = {
