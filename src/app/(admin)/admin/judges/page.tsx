@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { fetcher } from '@/lib/ui';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
@@ -11,6 +11,7 @@ type DetailRow = {
   teamId: string; teamName: string; teamCode: string;
   values: Record<string, number>; total: number | null;
   status: 'submitted' | 'draft' | 'none';
+  comment: string;
 };
 type Detail = { criteria: Criterion[]; rows: DetailRow[] };
 
@@ -187,7 +188,10 @@ export default function Judges() {
                 </thead>
                 <tbody>
                   {detail.rows.map((r) => (
-                    <tr key={r.teamId} style={r.status === 'none' ? { opacity: .55 } : undefined}>
+                    // Bảng đã rộng vì mỗi tiêu chí một cột, nên nhận xét nằm ở
+                    // HÀNG PHỤ trải ngang bên dưới thay vì thêm một cột nữa.
+                    <Fragment key={r.teamId}>
+                    <tr style={r.status === 'none' ? { opacity: .55 } : undefined}>
                       <td><b>{r.teamName}</b> <span className="code-chip">{r.teamCode}</span></td>
                       {detail.criteria.map((c) => (
                         <td key={c.id} className="tnum" style={{ textAlign: 'right' }}>
@@ -208,6 +212,15 @@ export default function Judges() {
                           : <span style={{ color: 'var(--muted-2)' }}>—</span>}
                       </td>
                     </tr>
+                    {r.comment && (
+                      <tr className="cmt-row">
+                        <td colSpan={detail.criteria.length + 4}>
+                          <div className="cmt-label">Nhận xét</div>
+                          <div className="cmt-text">{r.comment}</div>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   ))}
                   {detail.rows.length === 0 && (
                     <tr><td colSpan={detail.criteria.length + 4} style={{ color: 'var(--muted-2)' }}>Chưa có đội nào.</td></tr>

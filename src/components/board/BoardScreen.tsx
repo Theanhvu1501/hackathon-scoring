@@ -158,9 +158,8 @@ export default function BoardScreen({ initial, mock }: { initial: any; mock: Moc
 function Strip({ label, live }: { label: string; live: boolean }) {
   return (
     <header className="pw-strip">
-      <div className="pw-mark">A</div>
+      <img className="pw-mark" src="/logo.png" alt={EVENT} />
       <div className="pw-ident">
-        <b>{EVENT}</b>
         <span>{SESSION}</span>
       </div>
       <span className={'pw-state ' + (live ? 'live' : 'wait')}><i />{label}</span>

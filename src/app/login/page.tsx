@@ -15,8 +15,8 @@ export default function Login() {
   return (
     <div style={{maxWidth:440,margin:'8vh auto'}}>
       <form className="card card-pad" style={{textAlign:'center',padding:'36px 30px'}} onSubmit={submit}>
-        <div className="brand-logo" style={{width:64,height:64,fontSize:30,borderRadius:18,margin:'0 auto 20px'}}>A</div>
-        <div className="eyebrow" style={{textAlign:'center'}}>Automotive Hackathon 2026</div>
+        <img className="brand-logo" src="/logo.png" alt="FPT Automotive Hackathon 2026"
+          style={{height:84,margin:'0 auto 20px'}} />
         <h1 style={{fontSize:24,marginBottom:8}}>Đăng nhập hệ thống</h1>
         <p className="page-desc" style={{margin:'0 auto 22px'}}>Nhập mã truy cập được Ban tổ chức cấp. Không cần mật khẩu.</p>
         <div className="field" style={{textAlign:'left'}}>

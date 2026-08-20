@@ -22,6 +22,7 @@ model User {
   active     Boolean  @default(true)
   createdAt  DateTime @default(now())
   scores     Score[]
+  comments   ScoreComment[]
 }
 
 model Team {
@@ -34,6 +35,7 @@ model Team {
   createdAt  DateTime  @default(now())
   members    Member[]
   scores     Score[]
+  comments   ScoreComment[]
 }
 
 model Member {
@@ -70,6 +72,21 @@ model Score {
   submitted   Boolean   @default(false)
   updatedAt   DateTime  @updatedAt
   @@unique([judgeId, teamId, criterionId])
+}
+
+/// Nhận xét của một giám khảo cho một đội — một ô văn bản cho cả phiếu, không
+/// phải từng tiêu chí. CỐ Ý không có cột `submitted` riêng: trạng thái khoá đọc
+/// từ Score.submitted (xem isCardLocked), nên nhận xét khoá/mở khoá đúng cùng
+/// nhịp với điểm và không bao giờ lệch khỏi phiếu nó thuộc về.
+model ScoreComment {
+  id        String   @id @default(cuid())
+  judgeId   String
+  judge     User     @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  text      String
+  updatedAt DateTime @updatedAt
+  @@unique([judgeId, teamId])
 }
 
 model Settings {

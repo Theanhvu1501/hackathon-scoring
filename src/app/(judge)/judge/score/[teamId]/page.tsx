@@ -7,10 +7,13 @@ import { useConfirm } from '@/components/ConfirmProvider';
 
 type Crit = { id: string; name: string; description?: string | null; maxScore: number };
 
+const COMMENT_MAX = 2000;
+
 export default function Score({ params }: { params: { teamId: string } }) {
   const [crits, setCrits] = useState<Crit[]>([]);
   const [vals, setVals] = useState<Record<string, number>>({});
   const [over, setOver] = useState<Record<string, boolean>>({});
+  const [comment, setComment] = useState('');
   const [team, setTeam] = useState<any>(null);
   const [locked, setLocked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -22,11 +25,12 @@ export default function Score({ params }: { params: { teamId: string } }) {
     const [c, teams, mine] = await Promise.all([
       fetcher<Crit[]>('/api/criteria'),
       fetcher<any[]>('/api/teams'),
-      fetcher<{ scores: any[]; locked: boolean }>('/api/scores?teamId=' + params.teamId),
+      fetcher<{ scores: any[]; comment: string; locked: boolean }>('/api/scores?teamId=' + params.teamId),
     ]);
     setCrits(c);
     setTeam(teams.find((t) => t.id === params.teamId));
     setLocked(mine.locked);
+    setComment(mine.comment || '');
     const map: Record<string, number> = {};
     mine.scores.forEach((s) => { map[s.criterionId] = s.value; });
     setVals(map);
@@ -64,7 +68,7 @@ export default function Score({ params }: { params: { teamId: string } }) {
       const values = crits.map((c) => ({ criterionId: c.id, value: vals[c.id] || 0 }));
       await fetcher('/api/scores', {
         method: 'POST',
-        body: JSON.stringify({ teamId: params.teamId, values, submitted }),
+        body: JSON.stringify({ teamId: params.teamId, values, submitted, comment }),
       });
       if (submitted) router.push('/judge');
     } catch (e: any) {
@@ -121,6 +125,26 @@ export default function Score({ params }: { params: { teamId: string } }) {
         <div className="total-box">
           <span className="tl">TỔNG ĐIỂM CỦA BẠN</span>
           <span className="tv tnum">{total.toFixed(1)}<small>/{maxTotal}</small></span>
+        </div>
+
+        <div className="field" style={{ marginTop: 18, marginBottom: 0 }}>
+          <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+            <span>Nhận xét của bạn <span className="crit-max">(không bắt buộc)</span></span>
+            {!locked && (
+              <small style={{ color: comment.length > COMMENT_MAX ? 'var(--red, #c0392b)' : 'var(--muted-2)' }}>
+                {comment.length}/{COMMENT_MAX}
+              </small>
+            )}
+          </label>
+          {locked
+            ? <div className="comment-ro">{comment || <i style={{ color: 'var(--muted-2)' }}>Không có nhận xét.</i>}</div>
+            : <textarea className="input" rows={4} maxLength={COMMENT_MAX}
+                style={{ resize: 'vertical', lineHeight: 1.55 }}
+                placeholder="Điểm mạnh, điểm cần cải thiện, góp ý cho đội…"
+                value={comment} onChange={(e) => setComment(e.target.value)} />}
+          <div className="hint">
+            Chỉ bạn và ban tổ chức đọc được nhận xét này. Các giám khảo khác không xem được.
+          </div>
         </div>
 
         {!locked && (

@@ -1,5 +1,9 @@
 import './globals.css';
-export const metadata = { title: 'Automotive Hackathon 2026', description: 'Hệ thống chấm điểm chung kết' };
+export const metadata = {
+  title: 'Automotive Hackathon 2026',
+  description: 'Hệ thống chấm điểm chung kết',
+  icons: { icon: '/logo.png' },
+};
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi">

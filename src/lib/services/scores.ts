@@ -2,6 +2,25 @@ import { prisma } from '@/lib/db';
 export function getJudgeScores(judgeId:string, teamId:string) {
   return prisma.score.findMany({ where:{ judgeId, teamId } });
 }
+
+export const COMMENT_MAX = 2000;
+
+/** Nhận xét của CHÍNH giám khảo này cho đội này. Trả '' khi chưa có — người gọi
+ *  không phải phân biệt null với chuỗi rỗng. */
+export async function getJudgeComment(judgeId:string, teamId:string): Promise<string> {
+  const row = await prisma.scoreComment.findUnique({
+    where:{ judgeId_teamId:{ judgeId, teamId } }, select:{ text:true },
+  });
+  return row?.text ?? '';
+}
+
+/** `undefined` nghĩa là lần lưu này không đụng tới nhận xét — hợp lệ. */
+export function validateComment(comment: unknown): string | null {
+  if (comment === undefined || comment === null) return null;
+  if (typeof comment !== 'string') return 'nhận xét phải là chuỗi ký tự';
+  if (comment.length > COMMENT_MAX) return `nhận xét tối đa ${COMMENT_MAX} ký tự`;
+  return null;
+}
 export function validateScoreValues(
   values:{ criterionId:string; value:number }[],
   maxById:Record<string,number>,
@@ -20,14 +39,30 @@ export function validateScoreValues(
 export async function upsertScores(
   judgeId:string, teamId:string,
   values:{ criterionId:string; value:number }[], submitted:boolean,
+  comment?: string,
 ) {
-  await prisma.$transaction(values.map(v =>
+  const ops: any[] = values.map(v =>
     prisma.score.upsert({
       where:{ judgeId_teamId_criterionId:{ judgeId, teamId, criterionId:v.criterionId } },
       update:{ value:v.value, submitted },
       create:{ judgeId, teamId, criterionId:v.criterionId, value:v.value, submitted },
     })
-  ));
+  );
+  // Nhận xét đi CÙNG transaction với điểm: không bao giờ có cảnh điểm đã lưu mà
+  // nhận xét rớt, hoặc ngược lại.
+  if (comment !== undefined) {
+    const text = comment.trim();
+    ops.push(text
+      // Xoá trắng thì gỡ hẳn dòng, không lưu chuỗi rỗng — 'chưa nhận xét' và
+      // 'nhận xét rỗng' là cùng một trạng thái, đừng để DB có hai cách biểu diễn.
+      ? prisma.scoreComment.upsert({
+          where:{ judgeId_teamId:{ judgeId, teamId } },
+          update:{ text },
+          create:{ judgeId, teamId, text },
+        })
+      : prisma.scoreComment.deleteMany({ where:{ judgeId, teamId } }));
+  }
+  await prisma.$transaction(ops);
 }
 export type SaveResult = { ok: true } | { ok: false; error: 'locked' };
 
@@ -44,9 +79,10 @@ export async function isCardLocked(judgeId: string, teamId: string): Promise<boo
 export async function saveScoreCard(
   judgeId: string, teamId: string,
   values: { criterionId: string; value: number }[], submitted: boolean,
+  comment?: string,
 ): Promise<SaveResult> {
   if (await isCardLocked(judgeId, teamId)) return { ok: false, error: 'locked' };
-  await upsertScores(judgeId, teamId, values, submitted);
+  await upsertScores(judgeId, teamId, values, submitted, comment);
   return { ok: true };
 }
 
@@ -76,6 +112,7 @@ export type JudgeScoreRow = {
   values: Record<string, number>;   // criterionId -> value, missing key = not scored
   total: number | null;             // null when the judge has not scored this team at all
   status: JudgeScoreStatus;
+  comment: string;                  // '' khi giám khảo chưa nhận xét đội này
 };
 
 // Every team crossed with one judge's card, for the admin detail popup. Teams the
@@ -85,7 +122,7 @@ export async function judgeScoreDetail(judgeId: string): Promise<{
   criteria: { id: string; name: string; maxScore: number; order: number }[];
   rows: JudgeScoreRow[];
 }> {
-  const [criteria, teams, scores] = await Promise.all([
+  const [criteria, teams, scores, comments] = await Promise.all([
     prisma.criterion.findMany({
       orderBy: { order: 'asc' },
       select: { id: true, name: true, maxScore: true, order: true },
@@ -95,7 +132,10 @@ export async function judgeScoreDetail(judgeId: string): Promise<{
       where: { judgeId },
       select: { teamId: true, criterionId: true, value: true, submitted: true },
     }),
+    prisma.scoreComment.findMany({ where: { judgeId }, select: { teamId: true, text: true } }),
   ]);
+  const commentByTeam: Record<string, string> = {};
+  for (const c of comments) commentByTeam[c.teamId] = c.text;
 
   const rows = teams.map((team) => {
     const mine = scores.filter((s) => s.teamId === team.id);
@@ -108,7 +148,10 @@ export async function judgeScoreDetail(judgeId: string): Promise<{
     // a partial save leaves it a draft.
     const status: JudgeScoreStatus =
       mine.length === 0 ? 'none' : mine.every((s) => s.submitted) ? 'submitted' : 'draft';
-    return { teamId: team.id, teamName: team.name, teamCode: team.code, values, total, status };
+    return {
+      teamId: team.id, teamName: team.name, teamCode: team.code, values, total, status,
+      comment: commentByTeam[team.id] ?? '',
+    };
   });
 
   return { criteria, rows };

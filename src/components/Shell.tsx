@@ -96,8 +96,9 @@ export default function Shell({
       <div className={cx('sidebar-backdrop', drawer && 'open')} onClick={() => setDrawer(false)} />
       <aside className={cx('sidebar', drawer && 'open')}>
         <div className="brand">
-          <div className="brand-logo">A</div>
-          <div><div className="brand-name">Automotive Hackathon</div><div className="brand-sub">2026 · Chung kết</div></div>
+          {/* Wordmark đã chứa sẵn tên sự kiện và năm, nên bỏ khối chữ đi kèm để
+              khỏi đọc "Automotive Hackathon 2026" hai lần cạnh nhau. */}
+          <img className="brand-logo" src="/logo.png" alt="FPT Automotive Hackathon 2026" />
         </div>
         <div className="side-body">
           <div className="nav-group" style={{ marginTop: 0 }}>

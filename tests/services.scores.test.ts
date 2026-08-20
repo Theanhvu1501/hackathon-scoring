@@ -3,11 +3,15 @@ import { prisma, disconnect } from './helpers/db';
 import {
   upsertScores, getJudgeScores, judgeProgress, judgeScoreDetail, scoreMatrix,
   isCardLocked, saveScoreCard, unlockCard,
+  getJudgeComment, validateComment, COMMENT_MAX,
 } from '@/lib/services/scores';
 // Fixture dùng tên/mã cố định nên PHẢI tự dọn trước khi tạo: không dọn thì lần
 // chạy thứ hai trên cùng database sẽ đụng unique constraint của accessCode.
 // Trước đây file này chỉ qua được nhờ test reveal-flow tình cờ seed xoá sạch user.
-const FIXTURE_TEAMS = ['ST Team', 'ST Untouched', 'ST Draft'];
+const FIXTURE_TEAMS = [
+  'ST Team', 'ST Untouched', 'ST Draft',
+  'ST Cmt', 'ST CmtEmpty', 'ST CmtLock', 'ST CmtDetail', 'ST CmtLeak',
+];
 async function cleanFixtures() {
   await prisma.user.deleteMany({ where:{ accessCode:'ZZ99-ZZ98' } });
   await prisma.team.deleteMany({ where:{ name:{ in: FIXTURE_TEAMS } } });
@@ -184,5 +188,90 @@ describe('khoá phiếu chấm', () => {
     await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 4 }], false);
     expect(await unlockCard(judgeId, team.id)).toBe(0);
     await prisma.team.delete({ where: { id: team.id } });
+  });
+});
+
+describe('nhận xét của giám khảo', () => {
+  it('lưu và đọc lại được nhận xét kèm phiếu chấm', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST Cmt', code: 'CM' } });
+
+    expect(await getJudgeComment(judgeId, team.id)).toBe('');
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 5 }], false,
+      'Demo mượt, cần làm rõ mô hình kinh doanh.');
+    expect(await getJudgeComment(judgeId, team.id)).toBe('Demo mượt, cần làm rõ mô hình kinh doanh.');
+
+    // lưu nháp lần hai chỉ cập nhật, không sinh dòng thứ hai
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 6 }], false, 'Sửa lại nhận xét.');
+    expect(await prisma.scoreComment.count({ where: { judgeId, teamId: team.id } })).toBe(1);
+    expect(await getJudgeComment(judgeId, team.id)).toBe('Sửa lại nhận xét.');
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('nhận xét là tuỳ chọn — bỏ trống vẫn nộp được và không để lại dòng rác', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST CmtEmpty', code: 'CE' } });
+
+    // không truyền comment
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 5 }], false))
+      .toEqual({ ok: true });
+    expect(await prisma.scoreComment.count({ where: { judgeId, teamId: team.id } })).toBe(0);
+
+    // có rồi lại xoá trắng thì dòng bị gỡ, không lưu chuỗi rỗng
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 5 }], false, 'tạm');
+    expect(await prisma.scoreComment.count({ where: { judgeId, teamId: team.id } })).toBe(1);
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 5 }], false, '   ');
+    expect(await prisma.scoreComment.count({ where: { judgeId, teamId: team.id } })).toBe(0);
+    expect(await getJudgeComment(judgeId, team.id)).toBe('');
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('phiếu đã nộp thì nhận xét khoá theo, mở khoá xong sửa lại được', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST CmtLock', code: 'CL' } });
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 7 }], true, 'Nhận xét lúc nộp.');
+
+    // Khoá phải nằm ở TẦNG SERVICE: chặn được cả lệnh gọi API trực tiếp, không
+    // chỉ nút bị disable trên giao diện.
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 9 }], true, 'Cố sửa lén.'))
+      .toEqual({ ok: false, error: 'locked' });
+    expect(await getJudgeComment(judgeId, team.id)).toBe('Nhận xét lúc nộp.');
+
+    await unlockCard(judgeId, team.id);
+    expect(await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 9 }], true, 'Nhận xét đã sửa.'))
+      .toEqual({ ok: true });
+    expect(await getJudgeComment(judgeId, team.id)).toBe('Nhận xét đã sửa.');
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('judgeScoreDetail trả nhận xét theo từng đội cho ban tổ chức', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST CmtDetail', code: 'CD' } });
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 8 }], false, 'Ý tưởng tốt.');
+
+    const detail = await judgeScoreDetail(judgeId);
+    expect(detail.rows.find((r) => r.teamId === team.id)!.comment).toBe('Ý tưởng tốt.');
+    // đội chưa được nhận xét trả về chuỗi rỗng, không phải undefined
+    expect(detail.rows.find((r) => r.teamName === 'ST Untouched')!.comment).toBe('');
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('scoreMatrix KHÔNG chứa nhận xét — giám khảo xem được bảng này', async () => {
+    const team = await prisma.team.create({ data: { name: 'ST CmtLeak', code: 'CK' } });
+    await saveScoreCard(judgeId, team.id, [{ criterionId: critIds[0], value: 8 }], false, 'BÍ MẬT KHÔNG ĐƯỢC LỘ');
+
+    const m = await scoreMatrix(judgeId);
+    expect(JSON.stringify(m)).not.toContain('BÍ MẬT KHÔNG ĐƯỢC LỘ');
+    expect(JSON.stringify(m)).not.toContain('comment');
+
+    await prisma.team.delete({ where: { id: team.id } });
+  });
+
+  it('validateComment chặn nhận xét quá dài và kiểu sai', () => {
+    expect(validateComment(undefined)).toBeNull();
+    expect(validateComment('')).toBeNull();
+    expect(validateComment('a'.repeat(COMMENT_MAX))).toBeNull();
+    expect(validateComment('a'.repeat(COMMENT_MAX + 1))).toMatch(/2000/);
+    expect(validateComment(123 as any)).toMatch(/chuỗi/);
   });
 });

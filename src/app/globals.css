@@ -57,13 +57,12 @@ a{color:inherit;text-decoration:none}
 .brand{display:flex;align-items:center;gap:11px;height:var(--topbar-h);flex:0 0 auto;
   padding:0 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--navy-850);z-index:2}
 .side-body{padding:14px 14px}
+/* Logo là WORDMARK NGANG (FPT + Automotive Hackathon 2026, tỉ lệ ~4.2:1), không
+   phải icon vuông: khoá theo CHIỀU CAO và để chiều rộng tự co, đừng ép khung
+   vuông kẻo méo chữ. Nền shell vốn sáng nên chữ tối của logo đọc thẳng được. */
 .brand-logo{
-  width:40px;height:40px;border-radius:11px;background:var(--grad-brand);
-  display:grid;place-items:center;font-family:"Space Grotesk";font-weight:700;
-  color:#3a1400;font-size:20px;box-shadow:0 8px 20px -6px rgba(243,112,33,.6);
+  height:44px;width:auto;max-width:100%;object-fit:contain;display:block;
 }
-.brand-name{font-family:"Space Grotesk";font-weight:600;font-size:15px;line-height:1.15}
-.brand-sub{font-size:11px;color:var(--muted-2);letter-spacing:.04em;text-transform:uppercase}
 .nav-group{margin-top:16px}
 .nav-label{
   font-size:10.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted-2);
@@ -166,6 +165,25 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 .input:focus,.textarea:focus{outline:none;border-color:var(--orange);box-shadow:0 0 0 3px rgba(243,112,33,.15)}
 .textarea{resize:vertical;min-height:92px;line-height:1.55}
 .hint{font-size:11.5px;color:var(--muted-2);margin-top:6px}
+
+/* ---------- Nhận xét của giám khảo ---------- */
+/* Phiếu đã nộp: hiện nhận xét ở dạng chỉ-đọc chứ không phải textarea disabled —
+   textarea xám nhạt trông như đang hỏng, còn đây rõ ràng là bản đã chốt. */
+.comment-ro{
+  background:var(--navy-950);border:1px solid var(--line);border-radius:var(--radius-sm);
+  padding:11px 13px;font-size:13.5px;line-height:1.6;color:var(--text);
+  white-space:pre-wrap;word-break:break-word;min-height:64px;
+}
+/* Hàng phụ trải ngang dưới mỗi đội trong popup "Xem điểm" của ban tổ chức. */
+.cmt-row td{padding-top:0;background:rgba(23,54,120,.028)}
+.cmt-label{
+  font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;
+  color:var(--muted-2);margin-bottom:5px;
+}
+.cmt-text{
+  font-size:13px;line-height:1.6;color:var(--muted);
+  white-space:pre-wrap;word-break:break-word;max-width:72ch;
+}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .divider{height:1px;background:var(--line);margin:20px 0}
 
