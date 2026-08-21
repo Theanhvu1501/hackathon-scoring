@@ -223,9 +223,15 @@ tbody tr:hover{background:rgba(37,99,235,.035)}
 .crit-name{font-weight:600;font-size:14px}
 .crit-desc{font-size:12px;color:var(--muted-2);margin-top:3px}
 .crit-max{font-size:11.5px;color:var(--orange-lt);font-weight:600}
-.score-in{display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.score-in{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.score-in-row{display:flex;align-items:center;gap:8px}
 .score-in input{width:74px;text-align:center;font-family:"Space Grotesk";font-size:17px;font-weight:600;padding:9px}
 .score-in span{color:var(--muted-2);font-size:13px}
+/* Lỗi nằm DƯỚI ô, không chen vào hàng ngang: cột điểm chỉ rộng 150px nên thêm
+   một item nữa vào hàng là ô nhập bị bóp lại. */
+.score-err{font-size:11.5px;line-height:1.3;font-weight:600;color:var(--red);text-align:right}
+.input.is-bad,.input.is-bad:focus{border-color:var(--red)}
+.input.is-bad:focus{box-shadow:0 0 0 3px rgba(226,59,59,.15)}
 .total-box{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;margin-top:8px;border-radius:12px;background:linear-gradient(90deg,rgba(243,112,33,.14),rgba(37,99,235,.1));border:1px solid var(--line-strong)}
 .total-box .tl{font-size:13px;color:var(--muted);font-weight:600}
 .total-box .tv{font-family:"Space Grotesk";font-size:30px;font-weight:700}

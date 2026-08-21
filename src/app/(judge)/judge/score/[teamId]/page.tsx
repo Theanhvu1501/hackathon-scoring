@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { fetcher } from '@/lib/ui';
 import { useConfirm } from '@/components/ConfirmProvider';
+import { parseScoreInput, formatScoreInput } from '@/lib/score-input';
 
 type Crit = { id: string; name: string; description?: string | null; maxScore: number };
 
@@ -11,8 +12,9 @@ const COMMENT_MAX = 2000;
 
 export default function Score({ params }: { params: { teamId: string } }) {
   const [crits, setCrits] = useState<Crit[]>([]);
-  const [vals, setVals] = useState<Record<string, number>>({});
-  const [over, setOver] = useState<Record<string, boolean>>({});
+  // Giữ ĐÚNG chữ giám khảo gõ, không phải số đã diễn giải: có vậy ô mới trống
+  // được, và số vượt trần mới hiện nguyên như người ta nhập để mà báo đỏ.
+  const [raw, setRaw] = useState<Record<string, string>>({});
   const [comment, setComment] = useState('');
   const [team, setTeam] = useState<any>(null);
   const [locked, setLocked] = useState(false);
@@ -31,43 +33,36 @@ export default function Score({ params }: { params: { teamId: string } }) {
     setTeam(teams.find((t) => t.id === params.teamId));
     setLocked(mine.locked);
     setComment(mine.comment || '');
-    const map: Record<string, number> = {};
-    mine.scores.forEach((s) => { map[s.criterionId] = s.value; });
-    setVals(map);
+    const map: Record<string, string> = {};
+    mine.scores.forEach((s) => { map[s.criterionId] = String(s.value); });
+    setRaw(map);
   })(); }, [params.teamId]);
 
-  const total = crits.reduce((a, c) => a + (vals[c.id] || 0), 0);
+  const fields = crits.map((c) => ({ c, p: parseScoreInput(raw[c.id] ?? '', c.maxScore) }));
+  const total = fields.reduce((a, f) => a + (f.p.kind === 'ok' ? f.p.value : 0), 0);
   const maxTotal = crits.reduce((a, c) => a + c.maxScore, 0);
-  const hasOver = Object.values(over).some(Boolean);
-
-  /** Kẹp ngay lúc nhập VÀ báo cho giám khảo biết. Trước đây giá trị vượt trần bị
-   *  Math.min hạ xuống âm thầm lúc lưu — người chấm không hề biết điểm đã bị đổi.
-   *  Làm tròn về 1 chữ số thập phân cho khớp với mọi chỗ hiển thị (toFixed(1)):
-   *  nhập 8.37 mà bảng ghi 8.4 thì tổng nhìn như cộng sai. */
-  function setVal(c: Crit, raw: string) {
-    const n = Number(raw);
-    if (raw === '' || Number.isNaN(n)) {
-      setVals({ ...vals, [c.id]: 0 });
-      setOver({ ...over, [c.id]: false });
-      return;
-    }
-    const clamped = Math.round(Math.min(c.maxScore, Math.max(0, n)) * 10) / 10;
-    setVals({ ...vals, [c.id]: clamped });
-    setOver({ ...over, [c.id]: n > c.maxScore || n < 0 });
-  }
+  const hasError = fields.some((f) => f.p.kind === 'error');
+  const emptyCount = fields.filter((f) => f.p.kind === 'empty').length;
 
   async function save(submitted: boolean) {
-    if (hasOver) return;
+    if (hasError) return;
+    // Ô trống vẫn nộp được — có đội thực sự đáng 0 điểm ở một tiêu chí. Nhưng
+    // phiếu đã nộp thì không tự sửa lại được, nên bỏ sót do vô ý phải bị chặn
+    // lại một nhịp ở đây thay vì phát hiện ra lúc đã khoá.
     if (submitted && !(await confirm({
       title: 'Nộp điểm · ' + team.name,
       message: `Sau khi nộp, bạn KHÔNG thể sửa điểm đội này nữa — chỉ ban tổ chức mới mở khoá được. `
-             + `Tổng điểm bạn chấm: ${total.toFixed(1)}/${maxTotal}. Xác nhận nộp?`,
+             + `Tổng điểm bạn chấm: ${total.toFixed(1)}/${maxTotal}. `
+             + (emptyCount ? `Còn ${emptyCount} tiêu chí chưa nhập, sẽ tính 0 điểm. ` : '')
+             + `Xác nhận nộp?`,
       confirmText: 'Nộp điểm',
     }))) return;
 
     setBusy(true); setErr('');
     try {
-      const values = crits.map((c) => ({ criterionId: c.id, value: vals[c.id] || 0 }));
+      const values = fields.map((f) => ({
+        criterionId: f.c.id, value: f.p.kind === 'ok' ? f.p.value : 0,
+      }));
       await fetcher('/api/scores', {
         method: 'POST',
         body: JSON.stringify({ teamId: params.teamId, values, submitted, comment }),
@@ -105,21 +100,32 @@ export default function Score({ params }: { params: { teamId: string } }) {
       )}
 
       <div className="card card-pad" style={{ maxWidth: 720 }}>
-        {crits.map((c) => (
+        {fields.map(({ c, p }) => (
           <div className="crit" key={c.id}>
             <div>
               <div className="crit-name">{c.name} <span className="crit-max">/ {c.maxScore}đ</span></div>
               <div className="crit-desc">{c.description}</div>
             </div>
             <div className="score-in">
-              <input className="input" type="number" step="0.1" min={0} max={c.maxScore}
-                disabled={locked}
-                style={{ width: 80, borderColor: over[c.id] ? 'var(--red, #c0392b)' : undefined }}
-                value={vals[c.id] ?? ''} onChange={(e) => setVal(c, e.target.value)} />
-              <span>/ {c.maxScore}</span>
-              {over[c.id] && (
-                <small style={{ color: 'var(--red, #c0392b)', display: 'block' }}>Tối đa {c.maxScore}đ</small>
-              )}
+              <div className="score-in-row">
+                {/* Ô text chứ không phải type=number: nút mũi tên của ô number
+                    khiến cuộn chuột ngang qua là đổi điểm, và mỗi trình duyệt
+                    hiển thị số thập phân một kiểu theo locale.
+                    Bấm vào ô là bôi đen sẵn số cũ: chấm điểm là THAY số chứ không
+                    phải sửa vài ký tự, mà đặt con trỏ cuối số 8 rồi gõ 10 thì ra
+                    "810". Gõ là đè, không phải chèn thêm. */}
+                <input
+                  className={'input' + (p.kind === 'error' ? ' is-bad' : '')}
+                  type="text" inputMode="decimal" placeholder="—"
+                  disabled={locked}
+                  value={raw[c.id] ?? ''}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setRaw({ ...raw, [c.id]: e.target.value })}
+                  onBlur={() => setRaw({ ...raw, [c.id]: formatScoreInput(raw[c.id] ?? '', c.maxScore) })}
+                />
+                <span>/ {c.maxScore}</span>
+              </div>
+              {p.kind === 'error' && <small className="score-err">{p.message}</small>}
             </div>
           </div>
         ))}
@@ -152,9 +158,9 @@ export default function Score({ params }: { params: { teamId: string } }) {
         {!locked && (
           <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
             <button className="btn" style={{ flex: 1, justifyContent: 'center' }}
-              disabled={busy || hasOver} onClick={() => save(false)}>Lưu nháp</button>
+              disabled={busy || hasError} onClick={() => save(false)}>Lưu nháp</button>
             <button className="btn btn-primary" style={{ flex: 1, justifyContent: 'center' }}
-              disabled={busy || hasOver} onClick={() => save(true)}>Nộp điểm đội này</button>
+              disabled={busy || hasError} onClick={() => save(true)}>Nộp điểm đội này</button>
           </div>
         )}
       </div>
