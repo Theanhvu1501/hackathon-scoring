@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 export const SESSION_COOKIE = 'hs_session';
 
 export type Role = 'superadmin' | 'admin' | 'judge';
-export type SessionUser = { id: string; name: string; role: Role; isHead: boolean };
+export type SessionUser = { id: string; name: string; role: Role };
 function secret(): string { return process.env.SESSION_SECRET || 'dev-secret-change-me'; }
 
 export function signSession(userId: string): string {
@@ -29,7 +29,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   if (!userId) return null;
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, name: true, role: true, isHead: true, active: true },
+    select: { id: true, name: true, role: true, active: true },
   });
   if (!user || !user.active) return null;
   const { active, ...rest } = user;

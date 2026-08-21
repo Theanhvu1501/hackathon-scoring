@@ -6,25 +6,25 @@ const teams: TeamLite[] = [
   { id: 't2', name: 'CarVision', code: 'CV' },
   { id: 't3', name: 'RoadMind', code: 'RM' },
 ];
-// judges: j1..j4 normal, jH head. Sau thay đổi jH được tính như mọi người —
-// fixture giữ nguyên để thấy rõ hệ quả: t1 (jH cho cao) vượt t2 (jH cho thấp).
+// 5 giám khảo ngang nhau: j1..j4 chấm sát nhau, j5 lệch hẳn ra. Fixture cố ý
+// để một người lệch nhiều — t1 (j5 cho cao) phải vượt t2 (j5 cho thấp).
 function s(judgeId:string, teamId:string, criterionId:string, value:number): ScoreLite {
   return { judgeId, teamId, criterionId, value };
 }
 // two criteria c1(max25) c2(max25)
 const scores: ScoreLite[] = [
-  // t1: j1..j4 give totals 46 each, jH gives 50 -> 234
+  // t1: j1..j4 give totals 46 each, j5 gives 50 -> 234
   s('j1','t1','c1',23), s('j1','t1','c2',23),
   s('j2','t1','c1',22), s('j2','t1','c2',24),
   s('j3','t1','c1',23), s('j3','t1','c2',23),
   s('j4','t1','c1',24), s('j4','t1','c2',22),
-  s('jH','t1','c1',25), s('jH','t1','c2',25),
-  // t2: j1..j4 totals 48,48,47,47 -> 190; jH gives 40 -> 230
+  s('j5','t1','c1',25), s('j5','t1','c2',25),
+  // t2: j1..j4 totals 48,48,47,47 -> 190; j5 gives 40 -> 230
   s('j1','t2','c1',24), s('j1','t2','c2',24),
   s('j2','t2','c1',24), s('j2','t2','c2',24),
   s('j3','t2','c1',24), s('j3','t2','c2',23),
   s('j4','t2','c1',24), s('j4','t2','c2',23),
-  s('jH','t2','c1',20), s('jH','t2','c2',20),
+  s('j5','t2','c1',20), s('j5','t2','c2',20),
   // t3: only j1 scored (partial)
   s('j1','t3','c1',20), s('j1','t3','c2',20),
 ];
@@ -39,13 +39,13 @@ describe('judgeTotal', () => {
 });
 
 describe('teamTotal', () => {
-  it('sums every judge total including head', () => {
+  it('sums every judge total', () => {
     // t1: 46+46+46+46+50 = 234
     expect(teamTotal(scores, 't1').total).toBeCloseTo(234, 5);
     expect(teamTotal(scores, 't1').judgeCount).toBe(5);
   });
-  it('never holds a judge back — the head judge is always counted', () => {
-    // Trước đây teamTotal nhận { excludeJudgeId } để giữ kín điểm trưởng BGK.
+  it('never holds a judge back — every judge is always counted', () => {
+    // Trước đây teamTotal nhận { excludeJudgeId } để giữ kín điểm một giám khảo.
     // Cơ chế đó đã bỏ: chỉ còn một con số duy nhất cho mỗi đội.
     expect(teamTotal(scores, 't2').total).toBeCloseTo(230, 5);
     expect(teamTotal(scores, 't2').judgeCount).toBe(5);
@@ -62,7 +62,7 @@ describe('teamTotal', () => {
 });
 
 describe('computeLeaderboard', () => {
-  it('ranks by the one and only total, head judge included', () => {
+  it('ranks by the one and only total, every judge included', () => {
     const rows = computeLeaderboard({ teams, scores });
     const byId = Object.fromEntries(rows.map(r => [r.team.id, r]));
     expect(byId['t1'].score).toBeCloseTo(234, 5);

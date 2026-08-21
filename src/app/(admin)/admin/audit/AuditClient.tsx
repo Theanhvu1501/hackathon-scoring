@@ -9,7 +9,10 @@ const ACTION_LABEL: Record<string, string> = {
   'team.create': 'Tạo đội', 'team.update': 'Sửa đội', 'team.delete': 'Xoá đội',
   'member.create': 'Thêm thành viên', 'member.update': 'Sửa thành viên', 'member.delete': 'Xoá thành viên',
   'judge.create': 'Thêm giám khảo', 'judge.update': 'Sửa giám khảo', 'judge.delete': 'Xoá giám khảo',
-  'judge.regen_code': 'Đổi mã giám khảo', 'judge.set_code': 'Sửa mã giám khảo', 'judge.set_head': 'Đặt Trưởng BGK',
+  'judge.regen_code': 'Đổi mã giám khảo', 'judge.set_code': 'Sửa mã giám khảo',
+  // Vai trò Trưởng BGK đã bỏ, không sinh action này nữa. Giữ nhãn để nhật ký cũ
+  // vẫn đọc được thay vì hiện ra một mã thô.
+  'judge.set_head': 'Đặt Trưởng BGK (đã bỏ)',
   'account.create': 'Tạo tài khoản', 'account.update': 'Sửa tài khoản', 'account.delete': 'Xoá tài khoản',
   'account.regen_code': 'Đổi mã tài khoản', 'account.set_code': 'Sửa mã tài khoản',
   'criterion.create': 'Thêm tiêu chí', 'criterion.update': 'Sửa tiêu chí', 'criterion.delete': 'Xoá tiêu chí',

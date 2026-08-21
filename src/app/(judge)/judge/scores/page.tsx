@@ -4,7 +4,7 @@ import { fetcher } from '@/lib/ui';
 
 type Cell = { judgeId: string; total: number | null; status: 'submitted' | 'draft' | 'none' };
 type Row = { teamId: string; teamName: string; teamCode: string; cells: Cell[]; total: number | null };
-type Matrix = { judges: { id: string; name: string; isHead: boolean; isMe: boolean }[]; rows: Row[] };
+type Matrix = { judges: { id: string; name: string; isMe: boolean }[]; rows: Row[] };
 
 const CELL_TITLE: Record<Cell['status'], string> = {
   submitted: 'Đã nộp', draft: 'Phiếu nháp, chưa nộp', none: 'Chưa chấm',
@@ -44,7 +44,6 @@ export default function JudgeScores() {
                   <th key={j.id} style={{ textAlign: 'center', whiteSpace: 'nowrap',
                     color: j.isMe ? 'var(--orange-lt)' : undefined }}>
                     {j.name}
-                    {j.isHead && <small style={{ display: 'block', fontWeight: 400, color: 'var(--muted-2)' }}>Trưởng BGK</small>}
                     {j.isMe && <small style={{ display: 'block', fontWeight: 400 }}>bạn</small>}
                   </th>
                 ))}

@@ -14,11 +14,11 @@ export const MOCK_CRITERIA: BoardCriterion[] = [
 ];
 
 export const MOCK_JUDGES = [
-  { id: 'j1', name: 'Nguyễn Minh Quân', isHead: false },
-  { id: 'j2', name: 'Trần Thu Hà', isHead: false },
-  { id: 'j3', name: 'Lê Đức Anh', isHead: false },
-  { id: 'j4', name: 'Phạm Bảo Ngọc', isHead: false },
-  { id: 'j5', name: 'Đỗ Hoàng Nam', isHead: true },
+  { id: 'j1', name: 'Nguyễn Minh Quân' },
+  { id: 'j2', name: 'Trần Thu Hà' },
+  { id: 'j3', name: 'Lê Đức Anh' },
+  { id: 'j4', name: 'Phạm Bảo Ngọc' },
+  { id: 'j5', name: 'Đỗ Hoàng Nam' },
 ];
 
 type Seed = {
@@ -69,17 +69,15 @@ export function buildMockResults(opts: MockOptions = {}) {
     id: 't' + i, name: s.name, code: s.code, tag: s.tag, logoUrl: null,
   }));
 
-  // Không còn cơ chế giữ kín điểm trưởng BGK: mọi giám khảo đều được tính.
-  const activeJudges = MOCK_JUDGES;
   const scored = SEEDS.length - unscoredCount;
 
   const scores: ScoreLite[] = [];
   SEEDS.forEach((seed, ti) => {
     if (ti >= scored) return;
-    activeJudges.forEach((judge, ji) => {
+    MOCK_JUDGES.forEach((judge, ji) => {
       // Late judges lag on the tail of the field — a real board is never fully filled.
       MOCK_CRITERIA.forEach((crit, ci) => {
-        const spread = ((ji - activeJudges.length / 2) * 0.45) + wobble(ti, ci, tick) * 0.55;
+        const spread = ((ji - MOCK_JUDGES.length / 2) * 0.45) + wobble(ti, ci, tick) * 0.55;
         scores.push({
           judgeId: judge.id, teamId: 't' + ti, criterionId: crit.id,
           value: Math.round(clamp(seed.base[ci] + spread, 0, crit.max) * 10) / 10,
@@ -96,7 +94,7 @@ export function buildMockResults(opts: MockOptions = {}) {
     team: { ...r.team, members: [] },
     revealed: true,
     judgeScores: labelled.map((j) => ({
-      judgeId: j.id, label: j.label, isHead: j.isHead,
+      judgeId: j.id, label: j.label,
       total: judgeTotal(scores, r.team.id, j.id),
     })),
   }));

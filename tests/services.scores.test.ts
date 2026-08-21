@@ -43,6 +43,30 @@ describe('scores service', () => {
     expect(rows[0].submitted).toBe(true);
   });
 
+  it('giữ nguyên điểm lẻ 0.1 mà giám khảo nhập', async () => {
+    await upsertScores(judgeId, teamId, [
+      { criterionId: critIds[0], value: 8.3 }, { criterionId: critIds[1], value: 9.4 },
+    ], false);
+    const rows = await getJudgeScores(judgeId, teamId);
+    expect(rows.find(r => r.criterionId === critIds[0])!.value).toBe(8.3);
+    expect(rows.find(r => r.criterionId === critIds[1])!.value).toBe(9.4);
+  });
+
+  it('làm tròn về 0.1 ở server, không tin ô nhập', async () => {
+    // Giao diện đã làm tròn rồi, nhưng API là cửa công khai — một lệnh curl với
+    // 8.37 mà lọt vào DB thì mọi bảng hiển thị toFixed(1) sẽ cộng ra số khác.
+    await upsertScores(judgeId, teamId, [
+      { criterionId: critIds[0], value: 8.37 }, { criterionId: critIds[1], value: 9.44 },
+    ], false);
+    const rows = await getJudgeScores(judgeId, teamId);
+    expect(rows.find(r => r.criterionId === critIds[0])!.value).toBe(8.4);
+    expect(rows.find(r => r.criterionId === critIds[1])!.value).toBe(9.4);
+    // Trả fixture về trạng thái mà các test sau trông đợi (đã nộp, 10 và 9).
+    await upsertScores(judgeId, teamId, [
+      { criterionId: critIds[0], value: 10 }, { criterionId: critIds[1], value: 9 },
+    ], true);
+  });
+
   it('judgeProgress returns submitted (judge,team) pairs without a max(boolean) error', async () => {
     // depends on the submitted upsert above
     const progress = await judgeProgress();

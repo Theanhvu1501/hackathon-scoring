@@ -36,6 +36,11 @@ export function validateScoreValues(
   }
   return null;
 }
+/** Giám khảo chấm tới 0.1 điểm (8.3, 8.4). Làm tròn về đúng bước đó nằm ở TẦNG
+ *  NÀY chứ không chỉ ở ô nhập: giao diện có làm tròn mà API vẫn nhận 8.333333 thì
+ *  chỉ một lệnh curl là DB có số mà không màn hình nào hiển thị đúng. */
+function round1(n: number): number { return Math.round(n * 10) / 10; }
+
 export async function upsertScores(
   judgeId:string, teamId:string,
   values:{ criterionId:string; value:number }[], submitted:boolean,
@@ -44,8 +49,8 @@ export async function upsertScores(
   const ops: any[] = values.map(v =>
     prisma.score.upsert({
       where:{ judgeId_teamId_criterionId:{ judgeId, teamId, criterionId:v.criterionId } },
-      update:{ value:v.value, submitted },
-      create:{ judgeId, teamId, criterionId:v.criterionId, value:v.value, submitted },
+      update:{ value:round1(v.value), submitted },
+      create:{ judgeId, teamId, criterionId:v.criterionId, value:round1(v.value), submitted },
     })
   );
   // Nhận xét đi CÙNG transaction với điểm: không bao giờ có cảnh điểm đã lưu mà
@@ -171,13 +176,13 @@ export type MatrixRow = {
  * tự phải ổn định giữa các lần mở, không nhảy mỗi khi có người nộp điểm.
  */
 export async function scoreMatrix(viewerId: string): Promise<{
-  judges: { id: string; name: string; isHead: boolean; isMe: boolean }[];
+  judges: { id: string; name: string; isMe: boolean }[];
   rows: MatrixRow[];
 }> {
   const [judges, teams, scores] = await Promise.all([
     prisma.user.findMany({
       where: { role: 'judge' }, orderBy: { createdAt: 'asc' },
-      select: { id: true, name: true, isHead: true },
+      select: { id: true, name: true },
     }),
     prisma.team.findMany({ orderBy: { createdAt: 'asc' }, select: { id: true, name: true, code: true } }),
     prisma.score.findMany({ select: { judgeId: true, teamId: true, value: true, submitted: true } }),

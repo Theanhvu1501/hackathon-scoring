@@ -2,7 +2,7 @@
 import { teamMark } from '@/lib/team-art';
 import { awardOf, PROMISING_COUNT } from '@/lib/award';
 
-export type StageJudge = { judgeId: string; label: string; isHead: boolean; total: number | null };
+export type StageJudge = { judgeId: string; label: string; total: number | null };
 export type StageRow = {
   rank: number; tie: boolean; score: number | null;
   team: { id: string; name: string; code: string; logoUrl?: string | null; tag?: string | null };

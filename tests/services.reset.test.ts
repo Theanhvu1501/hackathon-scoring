@@ -33,7 +33,7 @@ beforeEach(async () => {
   await prisma.score.deleteMany();
   await prisma.team.updateMany({ where: { revealedAt: { not: null } }, data: { revealedAt: null } });
   base = await resetPreview();
-  const ja = await prisma.user.create({ data: { name: 'RS Judge A', role: 'judge', isHead: true, accessCode: CODES[0] } });
+  const ja = await prisma.user.create({ data: { name: 'RS Judge A', role: 'judge', accessCode: CODES[0] } });
   const jb = await prisma.user.create({ data: { name: 'RS Judge B', role: 'judge', accessCode: CODES[1] } });
   const ta = await prisma.team.create({
     data: { name: TEAMS[0], code: 'RA', revealedAt: new Date(), members: { create: [{ name: 'RS Mem 1' }, { name: 'RS Mem 2' }] } },

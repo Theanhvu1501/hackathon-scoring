@@ -22,7 +22,7 @@ export type SnapMember = {
 };
 export type SnapUser = {
   id: string; name: string; role: 'superadmin' | 'admin' | 'judge';
-  isHead: boolean; accessCode: string; active: boolean;
+  accessCode: string; active: boolean;
 };
 export type SnapCriterion = {
   id: string; name: string; description: string | null; maxScore: number; order: number;
@@ -41,6 +41,15 @@ export type SnapshotInfo = {
   teamCount: number; memberCount: number; judgeCount: number; criterionCount: number;
 };
 
+/** Bản chụp là JSON tự do trong DB — schema có thể đã đổi từ lúc chụp tới lúc
+ *  khôi phục, nên đọc ra phải lọc về đúng các cột hiện tại. */
+function pickUser(u: SnapUser): SnapUser {
+  return {
+    id: u.id, name: u.name, role: u.role, accessCode: u.accessCode,
+    active: u.active ?? true,
+  };
+}
+
 function summarize(p: SnapshotPayload) {
   return {
     teamCount: p.teams.length,
@@ -55,7 +64,7 @@ export async function buildPayload(): Promise<SnapshotPayload> {
     prisma.team.findMany({ select: { id: true, name: true, code: true, logoUrl: true, tag: true } }),
     prisma.member.findMany(),
     prisma.user.findMany({
-      select: { id: true, name: true, role: true, isHead: true, accessCode: true, active: true },
+      select: { id: true, name: true, role: true, accessCode: true, active: true },
     }),
     prisma.criterion.findMany({
       select: { id: true, name: true, description: true, maxScore: true, order: true },
@@ -141,7 +150,10 @@ export async function restoreSnapshot(
     ops.push(prisma.criterion.upsert({ where: { id: c.id }, update: c, create: c }));
   }
   for (const u of p.users) {
-    ops.push(prisma.user.upsert({ where: { id: u.id }, update: u, create: u }));
+    // Chỉ lấy đúng các cột hiện có: bản chụp cũ còn mang theo `isHead` (cột đã
+    // bị xoá), ném nguyên vào upsert là Prisma báo lỗi và cả lần khôi phục hỏng.
+    const row = pickUser(u);
+    ops.push(prisma.user.upsert({ where: { id: row.id }, update: row, create: row }));
   }
   // Thành viên dựng SAU đội: create cần teamId đã tồn tại.
   for (const m of p.members) {

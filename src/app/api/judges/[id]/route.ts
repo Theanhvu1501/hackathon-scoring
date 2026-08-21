@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth';
 import { audit } from '@/lib/audit';
 import { prisma } from '@/lib/db';
-import { regenerateCode, setHead, deleteJudge, updateJudge } from '@/lib/services/judges';
+import { regenerateCode, deleteJudge, updateJudge } from '@/lib/services/judges';
 import { setUserAccessCode } from '@/lib/services/access';
 
 function judgeName(id: string) {
@@ -19,19 +19,13 @@ export async function POST(req: Request, { params }:{ params:{ id:string } }) {
     await audit(u, 'judge.regen_code', { entity:'judge', entityId:params.id, target:j.name });
     return NextResponse.json(j);
   }
-  if (action === 'setHead') {
-    await setHead(params.id);
-    const j = await judgeName(params.id);
-    await audit(u, 'judge.set_head', { entity:'judge', entityId:params.id, target:j?.name ?? params.id });
-    return NextResponse.json({ ok:true });
-  }
   return NextResponse.json({ error:'unknown action' }, { status:400 });
 }
 
 export async function PATCH(req: Request, { params }:{ params:{ id:string } }) {
   const u = await requireRole('admin', 'superadmin');
   if (!u) return NextResponse.json({ error:'forbidden' }, { status:403 });
-  const { name, isHead, accessCode } = await req.json();
+  const { name, accessCode } = await req.json();
   // Mã đi trước: nếu mã sai thì trả lỗi ngay, không đổi nửa vời rồi mới báo.
   if (typeof accessCode === 'string' && accessCode.trim()) {
     const r = await setUserAccessCode(params.id, accessCode);
@@ -42,11 +36,6 @@ export async function PATCH(req: Request, { params }:{ params:{ id:string } }) {
   if (typeof name === 'string' && name.trim()) {
     await updateJudge(params.id, { name: name.trim() });
     await audit(u, 'judge.update', { entity:'judge', entityId:params.id, target:name.trim() });
-  }
-  if (isHead === true) {
-    await setHead(params.id);
-    const j = await judgeName(params.id);
-    await audit(u, 'judge.set_head', { entity:'judge', entityId:params.id, target:j?.name ?? params.id });
   }
   return NextResponse.json({ ok:true });
 }

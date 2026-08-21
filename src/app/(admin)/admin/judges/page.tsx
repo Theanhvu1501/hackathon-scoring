@@ -1,11 +1,11 @@
 'use client';
-import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { fetcher } from '@/lib/ui';
 import DataTable, { Column } from '@/components/DataTable';
 import Modal from '@/components/Modal';
 import { useConfirm } from '@/components/ConfirmProvider';
 
-type Judge = { id: string; name: string; isHead: boolean; accessCode: string };
+type Judge = { id: string; name: string; accessCode: string };
 type Criterion = { id: string; name: string; maxScore: number; order: number };
 type DetailRow = {
   teamId: string; teamName: string; teamCode: string;
@@ -21,9 +21,8 @@ const STATUS_LABEL: Record<DetailRow['status'], string> = {
 
 export default function Judges() {
   const [judges, setJudges] = useState<Judge[]>([]);
-  const [roleFilter, setRoleFilter] = useState<'all' | 'head' | 'normal'>('all');
   const [modal, setModal] = useState<null | 'add' | Judge>(null);
-  const [form, setForm] = useState({ name: '', isHead: false, accessCode: '' });
+  const [form, setForm] = useState({ name: '', accessCode: '' });
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
   const [detailOf, setDetailOf] = useState<Judge | null>(null);
@@ -33,11 +32,8 @@ export default function Judges() {
   async function load() { setJudges(await fetcher('/api/judges')); }
   useEffect(() => { load(); }, []);
 
-  const shown = useMemo(() => judges.filter((j) =>
-    roleFilter === 'all' ? true : roleFilter === 'head' ? j.isHead : !j.isHead), [judges, roleFilter]);
-
-  function openAdd() { setForm({ name: '', isHead: false, accessCode: '' }); setErr(''); setModal('add'); }
-  function openEdit(j: Judge) { setForm({ name: j.name, isHead: j.isHead, accessCode: j.accessCode }); setErr(''); setModal(j); }
+  function openAdd() { setForm({ name: '', accessCode: '' }); setErr(''); setModal('add'); }
+  function openEdit(j: Judge) { setForm({ name: j.name, accessCode: j.accessCode }); setErr(''); setModal(j); }
   async function openDetail(j: Judge) {
     setDetailOf(j); setDetail(null);
     setDetail(await fetcher('/api/judges/' + j.id + '/scores'));
@@ -57,7 +53,7 @@ export default function Judges() {
     setBusy(true); setErr('');
     try {
       if (modal === 'add') {
-        await fetcher('/api/judges', { method: 'POST', body: JSON.stringify({ name: form.name.trim(), isHead: form.isHead }) });
+        await fetcher('/api/judges', { method: 'POST', body: JSON.stringify({ name: form.name.trim() }) });
       } else if (j) {
         await fetcher('/api/judges/' + j.id, { method: 'PATCH', body: JSON.stringify(form) });
       }
@@ -100,16 +96,14 @@ export default function Judges() {
   }
 
   const columns: Column<Judge>[] = [
-    { key: 'name', header: 'Giám khảo', filterText: (j) => j.name, render: (j) => (
-      <span><b>{j.name}</b> {j.isHead && <span className="badge-head">♛ Trưởng BGK</span>}</span>
-    ) },
+    { key: 'name', header: 'Giám khảo', filterText: (j) => j.name, render: (j) => <b>{j.name}</b> },
     { key: 'code', header: 'Mã truy cập', filterText: (j) => j.accessCode, render: (j) => <span className="code-chip">{j.accessCode}</span> },
     { key: 'act', header: 'Thao tác', align: 'right', render: (j) => (
       <span style={{ whiteSpace: 'nowrap' }}>
         <button className="btn btn-sm" onClick={() => openDetail(j)}>Xem điểm</button>{' '}
         <button className="btn btn-sm" onClick={() => openEdit(j)}>Sửa</button>{' '}
         <button className="btn btn-sm" onClick={() => regen(j)}>↻ Đổi mã</button>{' '}
-        {!j.isHead && <button className="btn btn-sm btn-danger" onClick={() => del(j)}>Xoá</button>}
+        <button className="btn btn-sm btn-danger" onClick={() => del(j)}>Xoá</button>
       </span>
     ) },
   ];
@@ -121,15 +115,8 @@ export default function Judges() {
       )}
 
       <DataTable
-        columns={columns} rows={shown} getId={(j) => j.id}
+        columns={columns} rows={judges} getId={(j) => j.id}
         searchPlaceholder="Tìm theo tên hoặc mã…"
-        filters={
-          <select className="filter-select" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value as any)}>
-            <option value="all">Tất cả vai trò</option>
-            <option value="head">Trưởng BGK</option>
-            <option value="normal">Giám khảo thường</option>
-          </select>
-        }
         toolbarRight={<button className="btn btn-primary" onClick={openAdd}>＋ Thêm giám khảo</button>}
       />
 
@@ -154,11 +141,7 @@ export default function Judges() {
             </div>
           )}
 
-          <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 13.5, color: 'var(--text)' }}>
-            <input type="checkbox" checked={form.isHead} onChange={(e) => setForm({ ...form, isHead: e.target.checked })} />
-            Đặt làm <b>Trưởng BGK</b> (chỉ một người)
-          </label>
-          {modal === 'add' && <div className="hint" style={{ marginTop: 10 }}>Mã truy cập sẽ tự sinh sau khi tạo.</div>}
+          {modal === 'add' && <div className="hint">Mã truy cập sẽ tự sinh sau khi tạo.</div>}
           {err && <div className="hint" style={{ marginTop: 10, color: 'var(--red, #c0392b)' }}>{err}</div>}
         </Modal>
       )}

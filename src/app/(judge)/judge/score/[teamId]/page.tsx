@@ -41,7 +41,9 @@ export default function Score({ params }: { params: { teamId: string } }) {
   const hasOver = Object.values(over).some(Boolean);
 
   /** Kẹp ngay lúc nhập VÀ báo cho giám khảo biết. Trước đây giá trị vượt trần bị
-   *  Math.min hạ xuống âm thầm lúc lưu — người chấm không hề biết điểm đã bị đổi. */
+   *  Math.min hạ xuống âm thầm lúc lưu — người chấm không hề biết điểm đã bị đổi.
+   *  Làm tròn về 1 chữ số thập phân cho khớp với mọi chỗ hiển thị (toFixed(1)):
+   *  nhập 8.37 mà bảng ghi 8.4 thì tổng nhìn như cộng sai. */
   function setVal(c: Crit, raw: string) {
     const n = Number(raw);
     if (raw === '' || Number.isNaN(n)) {
@@ -49,7 +51,7 @@ export default function Score({ params }: { params: { teamId: string } }) {
       setOver({ ...over, [c.id]: false });
       return;
     }
-    const clamped = Math.min(c.maxScore, Math.max(0, n));
+    const clamped = Math.round(Math.min(c.maxScore, Math.max(0, n)) * 10) / 10;
     setVals({ ...vals, [c.id]: clamped });
     setOver({ ...over, [c.id]: n > c.maxScore || n < 0 });
   }
@@ -110,7 +112,7 @@ export default function Score({ params }: { params: { teamId: string } }) {
               <div className="crit-desc">{c.description}</div>
             </div>
             <div className="score-in">
-              <input className="input" type="number" step="0.5" min={0} max={c.maxScore}
+              <input className="input" type="number" step="0.1" min={0} max={c.maxScore}
                 disabled={locked}
                 style={{ width: 80, borderColor: over[c.id] ? 'var(--red, #c0392b)' : undefined }}
                 value={vals[c.id] ?? ''} onChange={(e) => setVal(c, e.target.value)} />

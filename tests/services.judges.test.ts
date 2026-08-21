@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from 'vitest';
 import { prisma, disconnect } from './helpers/db';
-import { createJudge, listJudges, regenerateCode, setHead, deleteJudge } from '@/lib/services/judges';
+import { createJudge, listJudges, regenerateCode, deleteJudge } from '@/lib/services/judges';
 import { createCriterion, listCriteria, updateCriterion, deleteCriterion, baremTotal } from '@/lib/services/criteria';
 import { normalizeAccessCode, validateAccessCode } from '@/lib/access-code';
 import { setUserAccessCode } from '@/lib/services/access';
@@ -15,12 +15,11 @@ describe('judges service', () => {
     expect(j2.accessCode).not.toBe(old);
     await deleteJudge(j.id);
   });
-  it('enforces a single head judge', async () => {
-    const a = await createJudge({ name:'Head A', isHead:true });
-    const b = await createJudge({ name:'Head B', isHead:true });
-    const heads = (await listJudges()).filter(j => j.isHead);
-    expect(heads.length).toBe(1);
-    expect(heads[0].id).toBe(b.id);
+  it('liệt kê theo thứ tự tạo — không có vai trò nào được ưu tiên', async () => {
+    const a = await createJudge({ name:'BGK Sắp Xếp A' });
+    const b = await createJudge({ name:'BGK Sắp Xếp B' });
+    const ids = (await listJudges()).map((j) => j.id);
+    expect(ids.indexOf(a.id)).toBeLessThan(ids.indexOf(b.id));
     await deleteJudge(a.id); await deleteJudge(b.id);
   });
 });

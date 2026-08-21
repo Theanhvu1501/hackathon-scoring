@@ -61,6 +61,22 @@ describe('captureSnapshot', () => {
 });
 
 describe('restoreSnapshot', () => {
+  it('khôi phục được bản chụp CŨ còn mang cột isHead đã bị xoá', async () => {
+    // Bản chụp là JSON tự do: những bản chụp trước lúc bỏ vai trò Trưởng BGK vẫn
+    // nằm trong DB và vẫn phải khôi phục được. Ném nguyên payload vào upsert thì
+    // Prisma báo "Unknown argument isHead" và cả lần khôi phục hỏng giữa sự kiện.
+    const snap = await capture();
+    const row = await prisma.snapshot.findUnique({ where: { id: snap.id } });
+    const legacy: any = row!.payload;
+    legacy.users = legacy.users.map((u: any) => ({ ...u, isHead: u.id === judgeA }));
+    await prisma.snapshot.update({ where: { id: snap.id }, data: { payload: legacy } });
+
+    await prisma.user.update({ where: { id: judgeA }, data: { name: 'SN Bi Sua Nham' } });
+    await restoreSnapshot(snap.id, { keepUserId: actorId });
+
+    expect((await prisma.user.findUnique({ where: { id: judgeA } }))?.name).toBe('SN Judge');
+  });
+
   it('trả tên đội bị sửa nhầm về như cũ', async () => {
     const snap = await capture();
     await prisma.team.update({ where: { id: teamA }, data: { name: 'SN Bi Sua Nham', tag: 'tag sai' } });

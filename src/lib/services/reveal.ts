@@ -68,7 +68,7 @@ export async function getResults(opts: { includeUnrevealed?: boolean } = {}) {
     prisma.user.findMany({
       where: { role: 'judge' },
       orderBy: { createdAt: 'asc' },
-      select: { id: true, isHead: true, active: true },
+      select: { id: true, active: true },
     }),
     prisma.criterion.findMany({ select: { maxScore: true } }),
     settings(),
@@ -96,11 +96,11 @@ export async function getResults(opts: { includeUnrevealed?: boolean } = {}) {
   // đi thì các thẻ không cộng lại thành tổng nữa.
   const judgeScoresFor = (teamId: string) => labelled
     .map((j) => ({
-      judgeId: j.id, label: j.label, isHead: j.isHead, active: j.active,
+      judgeId: j.id, label: j.label, active: j.active,
       total: judgeTotal(scores, teamId, j.id),
     }))
     .filter((j) => j.active || j.total !== null)
-    .map(({ judgeId, label, isHead, total }) => ({ judgeId, label, isHead, total }));
+    .map(({ judgeId, label, total }) => ({ judgeId, label, total }));
 
   const rows = ranked
     .map((r) => ({

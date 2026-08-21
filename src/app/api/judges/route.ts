@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const j = await createJudge(body);
   // KHÔNG ghi mã truy cập vào nhật ký — nếu ghi thì nhật ký thành danh bạ mã.
   await audit(u, 'judge.create', {
-    entity:'judge', entityId:j.id, target:j.name, detail:j.isHead ? 'Trưởng BGK' : undefined,
+    entity:'judge', entityId:j.id, target:j.name,
   });
   return NextResponse.json(j, { status:201 });
 }

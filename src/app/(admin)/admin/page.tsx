@@ -12,7 +12,7 @@ export default async function Dashboard() {
   return (
     <>
       <div className="card"><div className="matrix"><table>
-        <thead><tr><th>Đội</th>{judges.map(j=><th key={j.id} style={{textAlign:'center'}}>{j.name.split(' ').pop()}{j.isHead?' ♛':''}</th>)}</tr></thead>
+        <thead><tr><th>Đội</th>{judges.map(j=><th key={j.id} style={{textAlign:'center'}}>{j.name.split(' ').pop()}</th>)}</tr></thead>
         <tbody>
           {teams.map(t=>(
             <tr key={t.id}><td><div className="tcell"><TeamLogo code={t.code} logoUrl={t.logoUrl} /><b>{t.name}</b></div></td>

@@ -18,11 +18,13 @@ beforeAll(() => {
 }, 120000);
 
 describe('anonymizeJudges', () => {
-  it('trưởng BGK thành "BGK Chính", còn lại đánh số từ 1', () => {
-    const out = anonymizeJudges([
-      { id: 'h', isHead: true }, { id: 'a', isHead: false }, { id: 'b', isHead: false },
-    ]);
-    expect(out.map((j) => j.label)).toEqual(['BGK Chính', 'BGK 1', 'BGK 2']);
+  it('đánh số 1..n theo thứ tự đầu vào, mọi giám khảo ngang nhau', () => {
+    const out = anonymizeJudges([{ id: 'a' }, { id: 'b' }, { id: 'c' }]);
+    expect(out.map((j) => j.label)).toEqual(['BGK 1', 'BGK 2', 'BGK 3']);
+  });
+  it('giữ nguyên các trường khác của giám khảo', () => {
+    const out = anonymizeJudges([{ id: 'a', active: true }]);
+    expect(out[0]).toEqual({ id: 'a', active: true, label: 'BGK 1' });
   });
 });
 
@@ -104,8 +106,7 @@ describe('reveal flow', () => {
     expect(after.rows[0].judgeScores.length).toBeGreaterThan(0);
 
     const labels = after.rows[0].judgeScores.map((j) => j.label);
-    expect(labels).toContain('BGK Chính');
-    expect(labels).toContain('BGK 1');
+    expect(labels).toEqual(['BGK 1', 'BGK 2', 'BGK 3', 'BGK 4', 'BGK 5']);
     // tên thật trong seed không được lọt ra
     const names = (await prisma.user.findMany({ where: { role: 'judge' } })).map((u) => u.name);
     const blob = JSON.stringify(after);
